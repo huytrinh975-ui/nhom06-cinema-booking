@@ -1,0 +1,9 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__ . '/bootstrap.php';
+try { $customer = cbp_customer(); $policy = cbp_settings(); } catch (Throwable $error) { cbp_handle_error($error); }
+cbp_header('Quy định hủy vé', $customer, 'policy');
+cbp_heading('Quy định thanh toán và hủy vé', 'Áp dụng cho bản demo học tập CINEBOOK của nhóm.');
+?>
+<section class="panel narrow prose"><h2>1. Thanh toán demo</h2><p>Website cho phép mô phỏng giao dịch thành công hoặc thất bại. Không yêu cầu thông tin thẻ và không thu tiền thật. Chỉ giao dịch thành công mới xác nhận đơn và tạo vé điện tử.</p><h2>2. Thời hạn hủy</h2><p>Khách hàng được hủy đơn/vé của mình khi còn ít nhất <strong><?= $policy['cancel_cutoff_minutes'] ?> phút</strong> trước thời điểm bắt đầu suất chiếu. Mốc đúng <?= $policy['cancel_cutoff_minutes'] ?> phút vẫn được chấp nhận. Sau hạn này, yêu cầu hủy bị từ chối.</p><p>Nếu giờ chiếu thay đổi sau khi phát hành vé, hạn hủy được tính theo mốc sớm hơn giữa giờ đã lưu trên vé và giờ hiện tại của suất chiếu.</p><h2>3. Khoản hoàn tiền</h2><p>Đơn đã thanh toán và hủy đúng hạn được hoàn <strong><?= $policy['refund_percent'] ?>%</strong> số tiền vé bằng mô phỏng. Đơn chưa thanh toán không phát sinh khoản hoàn. Hoàn tiền demo được ghi nhận ngay cùng giao dịch hủy.</p><h2>4. Sau khi hủy</h2><p>Vé mất hiệu lực, ghế được giải phóng và đơn được giữ trong lịch sử. Gửi lại cùng yêu cầu không tạo thêm khoản hoàn. Đơn đã hủy không thể thanh toán lại; hãy đặt đơn mới nếu muốn xem phim.</p><h2>5. Trách nhiệm kiểm tra</h2><p>Chỉ tài khoản sở hữu đơn được xem vé, tải vé và hủy đơn. Bản in hoặc file vé tải trước thời điểm hủy không tự cập nhật; trạng thái trên website là thông tin cần đối chiếu.</p><p>Với suất chiếu do rạp thay đổi/hủy ngoài quy định tự hủy của khách, liên hệ quản trị viên để được xử lý. Bản demo chưa kết nối ngân hàng hoặc quy trình hoàn tiền ngoài hệ thống.</p></section>
+<?php cbp_footer(); ?>
