@@ -74,7 +74,7 @@ function cbp_date_label($value, string $format = 'H:i · d/m/Y'): string
 function cbp_demo_allowed(): bool
 {
     global $db_name;
-    return isset($db_name) && $db_name === 'cinema_booking_test'
+    return isset($db_name) && in_array($db_name, ['cinema_booking_db', 'cinema_booking_test'], true)
         && in_array($_SERVER['REMOTE_ADDR'] ?? '', ['127.0.0.1', '::1', '::ffff:127.0.0.1'], true);
 }
 
