@@ -1,0 +1,147 @@
+/* ===== CINEMATIX - TRANG CHI TIẾT PHIM (dùng kèm style.css) ===== */
+
+/* Banner phim: poster làm mờ + phủ tối, poster nét nằm bên trái */
+.d-hero{
+  position:relative;
+  min-height:570px;
+  padding:calc(var(--header-h) + 40px) 0 55px;
+  display:flex;
+  align-items:center;
+  background:var(--bg);
+  overflow:hidden;
+  color:#fff;
+}
+.d-hero-bg{
+  position:absolute;
+  inset:-40px;
+  width:calc(100% + 80px);
+  height:calc(100% + 80px);
+  max-width:none;
+  object-fit:cover;
+  filter:blur(26px) brightness(.75);
+  z-index:0;
+}
+.d-hero::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:0;
+  background:
+    linear-gradient(90deg,rgba(8,13,23,.92),rgba(8,13,23,.7) 55%,rgba(8,13,23,.45)),
+    linear-gradient(0deg,var(--bg) 0%,transparent 35%);
+}
+.d-hero-inner{
+  position:relative;
+  z-index:1;
+  display:grid;
+  grid-template-columns:280px minmax(0,1fr);
+  align-items:center;
+  gap:45px;
+  width:min(1280px,92%);
+  margin-inline:auto;
+}
+.d-poster{
+  display:block;
+  width:100%;
+  aspect-ratio:2/3;
+  object-fit:cover;
+  border-radius:14px;
+  box-shadow:0 15px 40px rgba(0,0,0,.5);
+  border:1px solid var(--line);
+}
+.d-info h1{
+  margin-bottom:8px;
+  color:#fff;
+  font-size:clamp(30px,4vw,44px);
+  font-weight:800;
+  line-height:1.2;
+}
+.d-en{margin-bottom:18px;color:#b8c3d6;font-size:16px}
+.d-info .meta-row{margin-bottom:24px}
+.d-facts{
+  display:grid;
+  grid-template-columns:115px minmax(0,1fr);
+  gap:12px 15px;
+  margin:0 0 28px;
+}
+.d-facts dt{color:#9eabc0;font-size:14px}
+.d-facts dd{margin:0;color:#fff;font-size:14px}
+
+/* Nội dung + lịch chiếu */
+.d-grid{
+  display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);
+  align-items:start;
+  gap:35px;
+}
+.d-h{margin-bottom:18px;color:#fff;font-size:23px;font-weight:750}
+.d-desc{margin-bottom:35px;color:#c4ccda;line-height:1.8}
+
+/* Trailer */
+.trailer{
+  position:relative;
+  width:100%;
+  aspect-ratio:16/9;
+  background-color:var(--bg2);
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  border-radius:13px;
+  overflow:hidden;
+}
+.trailer::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.3)}
+.trailer .play{
+  position:absolute;
+  top:50%;left:50%;
+  width:65px;height:65px;
+  display:grid;place-items:center;
+  transform:translate(-50%,-50%);
+  border:0;border-radius:50%;
+  background:var(--blue);
+  cursor:pointer;
+  transition:var(--t);
+}
+.trailer .play:hover{background:var(--blue-light);transform:translate(-50%,-50%) scale(1.08)}
+
+/* Lịch chiếu */
+.d-schedule{
+  padding:22px;
+  border:1px solid var(--line);
+  border-radius:14px;
+  background:var(--bg2);
+}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:7px;margin-bottom:22px}
+.day{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:10px 3px;
+  border:1px solid var(--line);
+  border-radius:8px;
+  background:var(--card);
+  color:#dce5f2;
+  font-family:var(--font);
+  cursor:pointer;
+  transition:var(--t);
+}
+.day:hover{border-color:var(--blue-light)}
+.day.is-selected{border-color:var(--blue);background:var(--blue);color:#fff}
+.day small{font-size:11px}
+.day b{font-size:15px}
+.cinema{padding:16px 0;border-top:1px solid var(--line)}
+.cinema-head h3{margin-bottom:4px;color:#fff;font-size:16px}
+.cinema-head span{color:#9eabc0;font-size:12px}
+.d-schedule .pills{margin-top:13px}
+.d-schedule .btn-block{margin-top:15px}
+
+/* Responsive */
+@media (max-width:800px){
+  .d-hero{padding-bottom:35px}
+  .d-hero-inner{grid-template-columns:190px minmax(0,1fr);gap:25px}
+  .d-grid{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  .d-hero-inner{grid-template-columns:1fr}
+  .d-poster{width:190px;margin:0 auto}
+  .d-info h1{font-size:27px}
+  .d-facts{grid-template-columns:100px minmax(0,1fr)}
+  .d-schedule{padding:15px}
+}
