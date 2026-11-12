@@ -4,7 +4,7 @@
  * File: admin/orders.php
  */
 $page_title = 'Quản Lý Đơn Đặt Vé';
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/auth.php';
 
 // Xử lý các thao tác POST
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -23,14 +23,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $stmt->close();
             $_SESSION['flash_success'] = 'Cập nhật trạng thái đơn hàng thành công!';
         }
-        header("Location: orders.php");
-        exit;
+        admin_redirect('orders.php');
     }
 }
 
-// Xử lý Xóa đơn hàng qua GET
-if (isset($_GET['delete_id'])) {
-    $delId = (int)$_GET['delete_id'];
+// Xử lý Xóa đơn hàng
+if (isset($_POST['delete_id'])) {
+    $delId = (int)$_POST['delete_id'];
     $stmt = $conn->prepare("DELETE FROM bookings WHERE id = ?");
     $stmt->bind_param("i", $delId);
     if ($stmt->execute()) {
@@ -39,8 +38,7 @@ if (isset($_GET['delete_id'])) {
         $_SESSION['flash_error'] = 'Lỗi khi xóa đơn đặt vé: ' . $conn->error;
     }
     $stmt->close();
-    header("Location: orders.php");
-    exit;
+    admin_redirect('orders.php');
 }
 
 // Lọc và Tìm kiếm
@@ -52,7 +50,7 @@ $filter_booking = $_GET['booking_status'] ?? 'all';
 $statTotalOrders = $conn->query("SELECT COUNT(*) AS cnt FROM bookings")->fetch_assoc()['cnt'];
 $statPaidOrders = $conn->query("SELECT COUNT(*) AS cnt FROM bookings WHERE payment_status = 'paid'")->fetch_assoc()['cnt'];
 $statPendingOrders = $conn->query("SELECT COUNT(*) AS cnt FROM bookings WHERE payment_status = 'pending'")->fetch_assoc()['cnt'];
-$statRevenue = $conn->query("SELECT COALESCE(SUM(total_amount), 0) AS rev FROM bookings WHERE payment_status = 'paid'")->fetch_assoc()['rev'];
+$statRevenue = $conn->query("SELECT COALESCE(SUM(total_amount), 0) AS rev FROM bookings WHERE payment_status = 'paid' AND booking_status <> 'cancelled'")->fetch_assoc()['rev'];
 
 // Xây dựng câu truy vấn danh sách đơn hàng
 $sql = "
@@ -106,6 +104,7 @@ if (!empty($params)) {
 }
 $stmt->execute();
 $orders = $stmt->get_result();
+require_once __DIR__ . '/header.php';
 ?>
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -278,12 +277,15 @@ $orders = $stmt->get_result();
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
                                     <!-- Xóa đơn -->
-                                    <a href="orders.php?delete_id=<?= $ord['id'] ?>" 
-                                       class="btn btn-outline-danger" 
-                                       data-confirm="Bạn có chắc chắn muốn xóa đơn đặt vé '<?= $ord['booking_code'] ?>'?"
-                                       title="Xóa đơn">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </a>
+                                    <form method="POST" class="d-inline">
+                                        <?php admin_csrf_field(); ?>
+                                        <input type="hidden" name="delete_id" value="<?= $ord['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                data-confirm="Bạn có chắc chắn muốn xóa đơn đặt vé '<?= $ord['booking_code'] ?>'?"
+                                                title="Xóa đơn">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -333,6 +335,7 @@ $orders = $stmt->get_result();
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <form method="POST">
+                <?php admin_csrf_field(); ?>
                 <input type="hidden" name="action" value="update_order_status">
                 <input type="hidden" name="booking_id" id="status_booking_id" value="0">
 

@@ -42,6 +42,18 @@
             const message = this.getAttribute('data-confirm') || 'Bạn có chắc chắn muốn thực hiện hành động này?';
             const targetUrl = this.getAttribute('href');
 
+            const submit = () => {
+                if (targetUrl && targetUrl !== '#') {
+                    window.location.href = targetUrl;
+                } else if (this.closest('form')) {
+                    this.closest('form').requestSubmit();
+                }
+            };
+            if (typeof Swal === 'undefined') {
+                if (window.confirm(message)) submit();
+                return;
+            }
+
             Swal.fire({
                 title: 'Xác nhận thao tác',
                 text: message,
@@ -53,13 +65,7 @@
                 cancelButtonText: 'Hủy bỏ',
                 reverseButtons: true
             }).then((result) => {
-                if (result.isConfirmed) {
-                    if (targetUrl && targetUrl !== '#') {
-                        window.location.href = targetUrl;
-                    } else if (this.closest('form')) {
-                        this.closest('form').submit();
-                    }
-                }
+                if (result.isConfirmed) submit();
             });
         });
     });

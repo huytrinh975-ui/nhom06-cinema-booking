@@ -4,7 +4,7 @@
  * File: admin/ajax_get_showtime_seats.php
  */
 header('Content-Type: application/json; charset=utf-8');
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/auth.php';
 
 $showtimeId = isset($_GET['showtime_id']) ? (int)$_GET['showtime_id'] : 0;
 

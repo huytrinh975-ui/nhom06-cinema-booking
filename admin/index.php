@@ -4,14 +4,14 @@
  * File: admin/index.php
  */
 $page_title = 'Bảng Điều Khiển';
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/auth.php';
 
 // 1. Thống kê tổng doanh thu (Chỉ tính các đơn đã thanh toán)
-$resRevenue = $conn->query("SELECT COALESCE(SUM(total_amount), 0) AS total_revenue FROM bookings WHERE payment_status = 'paid'");
+$resRevenue = $conn->query("SELECT COALESCE(SUM(total_amount), 0) AS total_revenue FROM bookings WHERE payment_status = 'paid' AND booking_status <> 'cancelled'");
 $totalRevenue = $resRevenue ? $resRevenue->fetch_assoc()['total_revenue'] : 0;
 
 // 2. Tổng số vé bán ra (Từ booking_details của đơn đã thanh toán)
-$resTickets = $conn->query("SELECT COUNT(*) AS total_tickets FROM booking_details bd JOIN bookings b ON bd.booking_id = b.id WHERE b.payment_status = 'paid'");
+$resTickets = $conn->query("SELECT COUNT(*) AS total_tickets FROM booking_details bd JOIN bookings b ON bd.booking_id = b.id WHERE b.payment_status = 'paid' AND b.booking_status <> 'cancelled'");
 $totalTickets = $resTickets ? $resTickets->fetch_assoc()['total_tickets'] : 0;
 
 // 3. Tổng số phim đang chiếu
@@ -30,7 +30,7 @@ for ($i = 6; $i >= 0; $i--) {
     $displayDate = date('d/m', strtotime("-$i days"));
     $days[] = $displayDate;
 
-    $stmtDay = $conn->prepare("SELECT COALESCE(SUM(total_amount), 0) AS daily_rev FROM bookings WHERE payment_status = 'paid' AND DATE(created_at) = ?");
+    $stmtDay = $conn->prepare("SELECT COALESCE(SUM(total_amount), 0) AS daily_rev FROM bookings WHERE payment_status = 'paid' AND booking_status <> 'cancelled' AND DATE(created_at) = ?");
     $stmtDay->bind_param("s", $date);
     $stmtDay->execute();
     $rev = $stmtDay->get_result()->fetch_assoc()['daily_rev'];
@@ -68,6 +68,7 @@ $recentBookingsQuery = "
     LIMIT 5
 ";
 $recentBookings = $conn->query($recentBookingsQuery);
+require_once __DIR__ . '/header.php';
 ?>
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -94,7 +95,7 @@ $recentBookings = $conn->query($recentBookingsQuery);
                 <div class="stat-title">Tổng doanh thu</div>
                 <div class="stat-value text-success"><?= format_currency($totalRevenue) ?></div>
                 <div class="text-muted small mt-2">
-                    <i class="fa-solid fa-circle-check text-success me-1"></i>Đơn đã thanh toán
+                    <i class="fa-solid fa-circle-check text-success me-1"></i>Đơn đã thanh toán còn hiệu lực
                 </div>
             </div>
             <div class="stat-icon">
@@ -161,7 +162,7 @@ $recentBookings = $conn->query($recentBookingsQuery);
                 <h6 class="fw-bold mb-0 text-slate-800">
                     <i class="fa-solid fa-chart-line text-primary me-2"></i>Doanh thu 7 ngày gần nhất
                 </h6>
-                <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill">VND</span>
+                <a href="revenue.php" class="text-decoration-none small">Xem báo cáo</a>
             </div>
             <div style="position: relative; height: 260px;">
                 <canvas id="revenueChart"></canvas>

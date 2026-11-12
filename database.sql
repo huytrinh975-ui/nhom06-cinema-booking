@@ -13,6 +13,9 @@ DROP TABLE IF EXISTS `showtimes`;
 DROP TABLE IF EXISTS `seats`;
 DROP TABLE IF EXISTS `rooms`;
 DROP TABLE IF EXISTS `cinemas`;
+DROP TABLE IF EXISTS `movie_genres`;
+DROP TABLE IF EXISTS `genres`;
+DROP TABLE IF EXISTS `vouchers`;
 DROP TABLE IF EXISTS `movies`;
 DROP TABLE IF EXISTS `users`;
 SET FOREIGN_KEY_CHECKS = 1;
@@ -40,6 +43,30 @@ CREATE TABLE `movies` (
     `trailer_url` VARCHAR(255) DEFAULT NULL,
     `status` ENUM('showing', 'upcoming', 'hidden') DEFAULT 'showing',
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS genres (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS movie_genres (
+    movie_id INT NOT NULL,
+    genre_id INT NOT NULL,
+    PRIMARY KEY (movie_id, genre_id),
+    CONSTRAINT fk_movie_genres_movie FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
+    CONSTRAINT fk_movie_genres_genre FOREIGN KEY (genre_id) REFERENCES genres(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS vouchers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(32) NOT NULL UNIQUE,
+    discount_type ENUM('percent', 'fixed') NOT NULL,
+    discount_value DECIMAL(12,2) NOT NULL,
+    min_order_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    starts_on DATE NOT NULL,
+    ends_on DATE NOT NULL,
+    active TINYINT(1) NOT NULL DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 3. Bảng cinemas (Cụm rạp chiếu phim)
@@ -129,6 +156,13 @@ INSERT INTO `movies` (`id`, `title`, `description`, `duration`, `release_date`, 
 (4, 'Kung Fu Panda 4', 'Po được chọn trở thành Thủ lĩnh Tinh thần của Thung lũng Bình Yên và phải tìm kiếm một Chiến binh Rồng mới, đồng thời chống lại mụ Phù thủy Tắc kè hoa xảo quyệt.', 94, '2024-03-08', 'https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg', 'https://www.youtube.com/watch?v=_inKs4eeHiI', 'showing'),
 (5, 'Lật Mặt 7: Một Điều Ước', 'Bộ phim về tình mẫu tử thiêng liêng xoay quanh câu chuyện gia đình bà Hai và 5 người con, mang thông điệp chữa lành sâu sắc cho mọi thế hệ người xem.', 138, '2024-04-26', 'https://image.tmdb.org/t/p/w500/1Xdd3ej0759f2pP79M7Lg5z1u4G.jpg', 'https://www.youtube.com/watch?v=sS_wXWc7cKk', 'upcoming'),
 (6, 'Kẻ Trộm Mặt Trăng 4', 'Gru và gia đình bước vào một chương mới đầy phiêu lưu với sự chào đời của Gru Jr. và sự xuất hiện của kẻ thù truyền kiếp Maxime Le Mal.', 95, '2024-07-03', 'https://image.tmdb.org/t/p/w500/wWba3TaojhK7NdycRhoQpsG0cnH.jpg', 'https://www.youtube.com/watch?v=LtNYaH61dXY', 'upcoming');
+
+INSERT INTO genres (id, name) VALUES
+(1, 'Hành động'), (2, 'Khoa học viễn tưởng'), (3, 'Tâm lý'),
+(4, 'Tình cảm'), (5, 'Hoạt hình'), (6, 'Hài'), (7, 'Gia đình');
+
+INSERT INTO movie_genres (movie_id, genre_id) VALUES
+(1, 1), (1, 2), (2, 3), (2, 4), (3, 1), (3, 2), (4, 1), (4, 5), (4, 6), (5, 7), (6, 5), (6, 6);
 
 -- Dữ liệu cinemas
 INSERT INTO `cinemas` (`id`, `name`, `address`, `city`) VALUES

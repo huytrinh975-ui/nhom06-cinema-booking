@@ -1,7 +1,15 @@
 <?php
 require __DIR__.'/includes/data.php';
 $id = (int)($_GET['id'] ?? 0);
-if (!isset($movies[$id])) { $id = (int)array_key_first($movies); }
+if (!isset($movies[$id])) {
+    http_response_code(404);
+    $pageTitle = 'Không tìm thấy phim - CINEMATIX';
+    $pageCss = ['detail.css']; $active = 'movies'; $bodyClass = 'solid-header';
+    include __DIR__.'/includes/header.php';
+    echo '<main class="container" style="padding-block: 7rem"><h1>Không tìm thấy phim</h1><a href="customer/movies.php">Xem danh sách phim</a></main>';
+    include __DIR__.'/includes/footer.php';
+    exit;
+}
 $m = $movies[$id];
 
 $pageTitle = $m['title'].' - CINEMATIX'; $pageCss = ['detail.css']; $active = 'movies'; $bodyClass = 'solid-header';

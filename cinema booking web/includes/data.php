@@ -47,9 +47,12 @@ function resolve_image($raw) {
 }
 
 /* ---------- Lấy phim từ database ---------- */
-// Dùng SELECT * để không bị lỗi khi bảng chưa có các cột mới (genre, director...)
+// Dùng m.* để vẫn đọc được các cột tùy chọn như director và banner.
 $movies = [];
-$result = $conn->query("SELECT * FROM movies ORDER BY id DESC");
+$result = $conn->query("SELECT m.*,
+    (SELECT GROUP_CONCAT(g.name ORDER BY g.name SEPARATOR ', ')
+     FROM movie_genres mg JOIN genres g ON g.id = mg.genre_id WHERE mg.movie_id = m.id) AS genre_names
+    FROM movies m WHERE m.status IN ('showing', 'upcoming') ORDER BY m.id DESC");
 
 if ($result) {
     while ($row = $result->fetch_assoc()) {
@@ -80,7 +83,7 @@ if ($result) {
             // Các cột này tùy chọn: thêm bằng lệnh ALTER TABLE thì sẽ tự hiện
             'rating'      => is_numeric($row['rating'] ?? null) ? $row['rating'] : '—',
             'age'         => $text('age_rating'),
-            'genre'       => $text('genre'),
+            'genre'       => $text('genre_names'),
             'director'    => $text('director'),
             'cast'        => $text('cast_list'),
             'lang'        => $text('language'),

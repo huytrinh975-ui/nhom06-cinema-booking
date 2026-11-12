@@ -3,23 +3,9 @@
  * Header & Sidebar dùng chung cho phân hệ Admin
  * Dự án: Hệ thống Đặt Vé Xem Phim Trực Tuyến (nhom06-cinema-booking)
  */
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/auth.php';
 
-require_once __DIR__ . '/../config/database.php';
-
-// Giả lập phiên đăng nhập Quản trị viên
-if (!isset($_SESSION['admin_user']) || empty($_SESSION['admin_user']['fullname']) || $_SESSION['admin_user']['id'] == 1) {
-    $_SESSION['admin_user'] = [
-        'id' => 1,
-        'fullname' => 'Trịnh Minh Huy',
-        'email' => 'trinhminhhuy@gmail.com',
-        'role' => 'admin'
-    ];
-}
-
-$current_user = $_SESSION['admin_user'];
+$userInitial = mb_substr($current_user['fullname'], 0, 1);
 $current_page = basename($_SERVER['PHP_SELF']);
 $page_title = $page_title ?? 'Hệ Thống Quản Trị';
 ?>
@@ -415,12 +401,21 @@ $page_title = $page_title ?? 'Hệ Thống Quản Trị';
             <span>Bảng Điều Khiển</span>
         </a>
 
+        <a href="revenue.php" class="nav-link <?= $current_page === 'revenue.php' ? 'active' : '' ?>">
+            <i class="fa-solid fa-chart-line"></i>
+            <span>Thống Kê Doanh Thu</span>
+        </a>
+
         <div class="nav-label">Quản Lý Phim & Chiếu</div>
         <a href="movies.php" class="nav-link <?= $current_page == 'movies.php' ? 'active' : '' ?>">
             <i class="fa-solid fa-clapperboard"></i>
             <span>Quản Lý Phim</span>
         </a>
-        <a href="cinemas.php" class="nav-link <?= $current_page == 'cinemas.php' ? 'active' : '' ?>">
+        <a href="genres.php" class="nav-link <?= $current_page === 'genres.php' ? 'active' : '' ?>">
+            <i class="fa-solid fa-tags"></i>
+            <span>Thể Loại Phim</span>
+        </a>
+        <a href="cinemas.php" class="nav-link <?= in_array($current_page, ['cinemas.php', 'seats.php'], true) ? 'active' : '' ?>">
             <i class="fa-solid fa-building"></i>
             <span>Cụm Rạp & Phòng Chiếu</span>
         </a>
@@ -434,6 +429,10 @@ $page_title = $page_title ?? 'Hệ Thống Quản Trị';
             <i class="fa-solid fa-ticket"></i>
             <span>Đơn Đặt Vé</span>
         </a>
+        <a href="vouchers.php" class="nav-link <?= $current_page === 'vouchers.php' ? 'active' : '' ?>">
+            <i class="fa-solid fa-tag"></i>
+            <span>Voucher</span>
+        </a>
         <a href="users.php" class="nav-link <?= $current_page == 'users.php' ? 'active' : '' ?>">
             <i class="fa-solid fa-users"></i>
             <span>Tài Khoản Khách Hàng</span>
@@ -442,13 +441,13 @@ $page_title = $page_title ?? 'Hệ Thống Quản Trị';
 
     <div class="sidebar-footer">
         <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 38px; height: 38px; font-weight: 700;">
-            H
+            <?= htmlspecialchars($userInitial) ?>
         </div>
         <div class="overflow-hidden me-auto">
             <div class="text-truncate fw-semibold text-white" style="font-size: 0.88rem;"><?= htmlspecialchars($current_user['fullname']) ?></div>
             <div class="text-truncate text-muted" style="font-size: 0.75rem;"><?= htmlspecialchars($current_user['email']) ?></div>
         </div>
-        <a href="../index.php" class="text-muted" title="Về trang chủ khách hàng" target="_blank">
+        <a href="../cinema%20booking%20web/index.php" class="text-muted" title="Về trang chủ khách hàng" target="_blank">
             <i class="fa-solid fa-arrow-up-right-from-square"></i>
         </a>
     </div>
@@ -474,7 +473,7 @@ $page_title = $page_title ?? 'Hệ Thống Quản Trị';
             </a>
             <div class="dropdown">
                 <button class="btn btn-light border dropdown-toggle d-flex align-items-center gap-2 rounded-pill px-3 py-1" data-bs-toggle="dropdown">
-                    <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold" style="width: 24px; height: 24px; font-size: 0.75rem;">H</span>
+                    <span class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center fw-bold" style="width: 24px; height: 24px; font-size: 0.75rem;"><?= htmlspecialchars($userInitial) ?></span>
                     <span class="fw-medium" style="font-size: 0.9rem;"><?= htmlspecialchars($current_user['fullname']) ?></span>
                 </button>
                 <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 mt-2">
@@ -484,7 +483,13 @@ $page_title = $page_title ?? 'Hệ Thống Quản Trị';
                         <span class="badge bg-success-subtle text-success mt-1">Quản trị viên</span>
                     </li>
                     <li><a class="dropdown-menu-item dropdown-item py-2 mt-1" href="users.php"><i class="fa-solid fa-user-gear me-2 text-muted"></i>Quản lý tài khoản</a></li>
-                    <li><a class="dropdown-menu-item dropdown-item py-2" href="../index.php" target="_blank"><i class="fa-solid fa-globe me-2 text-muted"></i>Xem website khách</a></li>
+                    <li><a class="dropdown-menu-item dropdown-item py-2" href="../cinema%20booking%20web/index.php" target="_blank"><i class="fa-solid fa-globe me-2 text-muted"></i>Xem website khách</a></li>
+                    <li>
+                        <form method="post" action="logout.php">
+                            <?php admin_csrf_field(); ?>
+                            <button type="submit" class="dropdown-item py-2"><i class="fa-solid fa-right-from-bracket me-2 text-muted"></i>Đăng xuất</button>
+                        </form>
+                    </li>
                 </ul>
             </div>
         </div>

@@ -4,7 +4,7 @@
  * File: admin/showtimes.php
  */
 $page_title = 'Quản Lý Lịch & Suất Chiếu';
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/auth.php';
 
 // Xử lý các thao tác POST
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -54,14 +54,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $_SESSION['flash_success'] = 'Thêm suất chiếu mới thành công!';
             }
         }
-        header("Location: showtimes.php");
-        exit;
+        admin_redirect('showtimes.php');
     }
 }
 
-// Xử lý Xóa suất chiếu qua GET
-if (isset($_GET['delete_id'])) {
-    $delId = (int)$_GET['delete_id'];
+// Xử lý Xóa suất chiếu
+if (isset($_POST['delete_id'])) {
+    $delId = (int)$_POST['delete_id'];
     $checkB = $conn->prepare("SELECT COUNT(*) as cnt FROM bookings WHERE showtime_id = ?");
     $checkB->bind_param("i", $delId);
     $checkB->execute();
@@ -77,8 +76,7 @@ if (isset($_GET['delete_id'])) {
         $delStmt->close();
         $_SESSION['flash_success'] = 'Xóa suất chiếu thành công!';
     }
-    header("Location: showtimes.php");
-    exit;
+    admin_redirect('showtimes.php');
 }
 
 // Lọc và Tìm kiếm
@@ -141,6 +139,7 @@ $moviesList = $conn->query("SELECT id, title, duration FROM movies WHERE status 
 
 // Danh sách cụm rạp để đưa vào dropdown
 $cinemasList = $conn->query("SELECT id, name, city FROM cinemas ORDER BY name ASC");
+require_once __DIR__ . '/header.php';
 ?>
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -296,12 +295,15 @@ $cinemasList = $conn->query("SELECT id, name, city FROM cinemas ORDER BY name AS
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
                                     <!-- Xóa -->
-                                    <a href="showtimes.php?delete_id=<?= $st['id'] ?>" 
-                                       class="btn btn-outline-danger" 
-                                       data-confirm="Bạn có chắc chắn muốn xóa suất chiếu này?"
-                                       title="Xóa suất chiếu">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </a>
+                                    <form method="POST" class="d-inline">
+                                        <?php admin_csrf_field(); ?>
+                                        <input type="hidden" name="delete_id" value="<?= $st['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                data-confirm="Bạn có chắc chắn muốn xóa suất chiếu này?"
+                                                title="Xóa suất chiếu">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -324,6 +326,7 @@ $cinemasList = $conn->query("SELECT id, name, city FROM cinemas ORDER BY name AS
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <form method="POST">
+                <?php admin_csrf_field(); ?>
                 <input type="hidden" name="action" value="save_showtime">
                 <input type="hidden" name="id" id="showtime_id" value="0">
 
@@ -619,7 +622,7 @@ function openQuickSeatMap(showtimeId) {
             // Nhóm theo hàng ghế (A, B, C...)
             const rows = {};
             data.seats.forEach(seat => {
-                const rowKey = seat.seat_number.charAt(0);
+                const rowKey = seat.seat_number.match(/^[A-Z]+/i)?.[0] || seat.seat_number.charAt(0);
                 if (!rows[rowKey]) rows[rowKey] = [];
                 rows[rowKey].push(seat);
             });

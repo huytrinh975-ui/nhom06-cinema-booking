@@ -4,7 +4,7 @@
  * File: admin/users.php
  */
 $page_title = 'Quản Lý Người Dùng & Khách Hàng';
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/auth.php';
 
 // Xử lý các thao tác POST
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -20,7 +20,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $status = $_POST['status'] ?? 'active';
         $password = trim($_POST['password'] ?? '');
 
-        if (empty($fullname) || empty($email)) {
+        if ($id === (int)$current_user['id'] && ($role !== 'admin' || $status !== 'active')) {
+            $_SESSION['flash_error'] = 'Bạn không thể tự khóa hoặc hạ quyền tài khoản đang đăng nhập.';
+        } elseif ($id <= 0 && $role === 'admin' && strlen($password) < 8) {
+            $_SESSION['flash_error'] = 'Mật khẩu quản trị mới cần có ít nhất 8 ký tự.';
+        } elseif ($fullname === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)
+            || !in_array($role, ['admin', 'customer'], true) || !in_array($status, ['active', 'locked'], true)) {
             $_SESSION['flash_error'] = 'Vui lòng nhập họ tên và email hợp lệ!';
         } else {
             if ($id > 0) {
@@ -63,8 +68,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $chk->close();
             }
         }
-        header("Location: users.php");
-        exit;
+        admin_redirect('users.php');
     }
 
     // 2. Khóa hoặc Mở khóa tài khoản nhanh
@@ -73,7 +77,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $newStatus = $_POST['new_status'] ?? 'active';
 
         // Không cho phép tự khóa chính tài khoản admin đang đăng nhập
-        if ($userId === (int)$_SESSION['admin_user']['id'] && $newStatus === 'locked') {
+        if ($userId === (int)$current_user['id'] && $newStatus === 'locked') {
             $_SESSION['flash_error'] = 'Bạn không thể tự khóa tài khoản quản trị của chính mình!';
         } else {
             $stmt = $conn->prepare("UPDATE users SET status = ? WHERE id = ?");
@@ -82,15 +86,14 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $stmt->close();
             $_SESSION['flash_success'] = ($newStatus === 'locked' ? 'Đã khóa tài khoản!' : 'Đã mở khóa tài khoản thành công!');
         }
-        header("Location: users.php");
-        exit;
+        admin_redirect('users.php');
     }
 }
 
-// Xử lý Xóa người dùng qua GET
-if (isset($_GET['delete_id'])) {
-    $delId = (int)$_GET['delete_id'];
-    if ($delId === (int)$_SESSION['admin_user']['id']) {
+// Xử lý Xóa người dùng
+if (isset($_POST['delete_id'])) {
+    $delId = (int)$_POST['delete_id'];
+    if ($delId === (int)$current_user['id']) {
         $_SESSION['flash_error'] = 'Bạn không thể xóa tài khoản của chính mình!';
     } else {
         $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
@@ -102,8 +105,7 @@ if (isset($_GET['delete_id'])) {
         }
         $stmt->close();
     }
-    header("Location: users.php");
-    exit;
+    admin_redirect('users.php');
 }
 
 // Lọc và Tìm kiếm
@@ -156,6 +158,7 @@ if (!empty($params)) {
 }
 $stmt->execute();
 $users = $stmt->get_result();
+require_once __DIR__ . '/header.php';
 ?>
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -304,6 +307,7 @@ $users = $stmt->get_result();
                                 <div class="btn-group btn-group-sm">
                                     <!-- Nút Khóa / Mở Khóa -->
                                     <form method="POST" class="d-inline">
+                                        <?php admin_csrf_field(); ?>
                                         <input type="hidden" name="action" value="toggle_status">
                                         <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
                                         <input type="hidden" name="new_status" value="<?= $u['status'] === 'active' ? 'locked' : 'active' ?>">
@@ -322,12 +326,15 @@ $users = $stmt->get_result();
                                     </button>
 
                                     <!-- Nút Xóa -->
-                                    <a href="users.php?delete_id=<?= $u['id'] ?>" 
-                                       class="btn btn-outline-danger" 
-                                       data-confirm="Bạn có chắc chắn muốn xóa tài khoản '<?= htmlspecialchars(addslashes($u['fullname'])) ?>'?"
-                                       title="Xóa tài khoản">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </a>
+                                    <form method="POST" class="d-inline">
+                                        <?php admin_csrf_field(); ?>
+                                        <input type="hidden" name="delete_id" value="<?= $u['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                data-confirm="Bạn có chắc chắn muốn xóa tài khoản '<?= htmlspecialchars(addslashes($u['fullname'])) ?>'?"
+                                                title="Xóa tài khoản">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -350,6 +357,7 @@ $users = $stmt->get_result();
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <form method="POST">
+                <?php admin_csrf_field(); ?>
                 <input type="hidden" name="action" value="save_user">
                 <input type="hidden" name="id" id="modal_user_id" value="0">
 

@@ -4,7 +4,7 @@
  * File: admin/cinemas.php
  */
 $page_title = 'Quản Lý Cụm Rạp & Phòng Chiếu';
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/auth.php';
 
 // Xử lý các thao tác POST
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -34,8 +34,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $_SESSION['flash_success'] = 'Thêm cụm rạp mới thành công!';
             }
         }
-        header("Location: cinemas.php");
-        exit;
+        admin_redirect('cinemas.php');
     }
 
     // 2. Thêm hoặc Sửa Phòng Chiếu
@@ -55,53 +54,65 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $stmt->close();
                 $_SESSION['flash_success'] = 'Cập nhật phòng chiếu thành công!';
             } else {
-                // Thêm phòng mới với tổng số ghế ban đầu là 28 ghế tiêu chuẩn
-                $total_seats = 28;
-                $stmt = $conn->prepare("INSERT INTO rooms (cinema_id, name, total_seats) VALUES (?, ?, ?)");
-                $stmt->bind_param("isi", $cinema_id, $name, $total_seats);
-                $stmt->execute();
-                $newRoomId = $stmt->insert_id;
-                $stmt->close();
-
-                // Nếu chọn tự động sinh ghế
-                if ($auto_generate_seats && $newRoomId > 0) {
-                    generateDefaultSeatsForRoom($conn, $newRoomId);
+                $conn->begin_transaction();
+                try {
+                    $stmt = $conn->prepare("INSERT INTO rooms (cinema_id, name) VALUES (?, ?)");
+                    $stmt->bind_param("is", $cinema_id, $name);
+                    $stmt->execute();
+                    if ($auto_generate_seats) {
+                        generateDefaultSeatsForRoom($conn, $stmt->insert_id);
+                    }
+                    $conn->commit();
+                    $_SESSION['flash_success'] = 'Thêm phòng chiếu mới thành công!';
+                } catch (mysqli_sql_exception $e) {
+                    $conn->rollback();
+                    if ((int) $e->getCode() !== 1452) {
+                        throw $e;
+                    }
+                    $_SESSION['flash_error'] = 'Cụm rạp không còn tồn tại.';
                 }
-
-                $_SESSION['flash_success'] = 'Thêm phòng chiếu mới và khởi tạo sơ đồ ghế thành công!';
             }
         }
-        header("Location: cinemas.php" . ($cinema_id ? "?cinema_id=$cinema_id" : ""));
-        exit;
+        admin_redirect('cinemas.php' . ($cinema_id ? "?cinema_id=$cinema_id" : ""));
     }
 
     // 3. Khởi tạo lại sơ đồ ghế cho một phòng
     if ($action === 'regenerate_seats') {
-        $room_id = (int)($_POST['room_id'] ?? 0);
-        if ($room_id > 0) {
-            // Xóa ghế cũ nếu chưa có suất chiếu hoặc đơn đặt vé
-            $checkShowtimes = $conn->prepare("SELECT COUNT(*) as cnt FROM showtimes WHERE room_id = ?");
-            $checkShowtimes->bind_param("i", $room_id);
-            $checkShowtimes->execute();
-            $cnt = $checkShowtimes->get_result()->fetch_assoc()['cnt'];
-            $checkShowtimes->close();
-
-            if ($cnt > 0) {
-                $_SESSION['flash_error'] = 'Phòng này đang có suất chiếu hoạt động, không thể tạo lại sơ đồ ghế!';
-            } else {
-                $conn->query("DELETE FROM seats WHERE room_id = $room_id");
-                generateDefaultSeatsForRoom($conn, $room_id);
-                $_SESSION['flash_success'] = 'Đã tạo lại sơ đồ 28 ghế tiêu chuẩn (Standard, VIP, Couple) cho phòng!';
+        $room_id = (int) ($_POST['room_id'] ?? 0);
+        $conn->begin_transaction();
+        try {
+            $room = $conn->prepare("SELECT id FROM rooms WHERE id = ? FOR UPDATE");
+            $room->bind_param('i', $room_id);
+            $room->execute();
+            if (!$room->get_result()->fetch_row()) {
+                throw new DomainException('Không tìm thấy phòng chiếu.');
             }
+            $check = $conn->prepare("SELECT id FROM showtimes WHERE room_id = ? LIMIT 1");
+            $check->bind_param('i', $room_id);
+            $check->execute();
+            if ($check->get_result()->fetch_row()) {
+                throw new DomainException('Phòng đã có suất chiếu. Hãy sửa từng ghế trong sơ đồ.');
+            }
+            $delete = $conn->prepare("DELETE FROM seats WHERE room_id = ?");
+            $delete->bind_param('i', $room_id);
+            $delete->execute();
+            generateDefaultSeatsForRoom($conn, $room_id);
+            $conn->commit();
+            $_SESSION['flash_success'] = 'Đã khôi phục sơ đồ 28 vị trí mặc định.';
+        } catch (DomainException $e) {
+            $conn->rollback();
+            $_SESSION['flash_error'] = $e->getMessage();
+        } catch (mysqli_sql_exception $e) {
+            $conn->rollback();
+            throw $e;
         }
-        header("Location: cinemas.php");
-        exit;
+        admin_redirect('cinemas.php');
     }
 }
 
-// Xử lý Xóa Rạp hoặc Xóa Phòng qua GET
-if (isset($_GET['delete_cinema'])) {
-    $delCinemaId = (int)$_GET['delete_cinema'];
+// Xử lý Xóa Rạp hoặc Xóa Phòng
+if (isset($_POST['delete_cinema'])) {
+    $delCinemaId = (int)$_POST['delete_cinema'];
     $stmt = $conn->prepare("DELETE FROM cinemas WHERE id = ?");
     $stmt->bind_param("i", $delCinemaId);
     if ($stmt->execute()) {
@@ -110,12 +121,11 @@ if (isset($_GET['delete_cinema'])) {
         $_SESSION['flash_error'] = 'Không thể xóa cụm rạp: ' . $conn->error;
     }
     $stmt->close();
-    header("Location: cinemas.php");
-    exit;
+    admin_redirect('cinemas.php');
 }
 
-if (isset($_GET['delete_room'])) {
-    $delRoomId = (int)$_GET['delete_room'];
+if (isset($_POST['delete_room'])) {
+    $delRoomId = (int)$_POST['delete_room'];
     $check = $conn->prepare("SELECT COUNT(*) as cnt FROM showtimes WHERE room_id = ?");
     $check->bind_param("i", $delRoomId);
     $check->execute();
@@ -131,42 +141,34 @@ if (isset($_GET['delete_room'])) {
         $del->close();
         $_SESSION['flash_success'] = 'Xóa phòng chiếu thành công!';
     }
-    header("Location: cinemas.php");
-    exit;
+    admin_redirect('cinemas.php');
 }
 
 // Hàm hỗ trợ tạo cấu trúc ghế chuẩn cho phòng
-function generateDefaultSeatsForRoom($conn, $roomId) {
-    // Hàng A (Standard): A1 -> A8
-    for ($i = 1; $i <= 8; $i++) {
-        $stmt = $conn->prepare("INSERT INTO seats (room_id, seat_number, seat_type, price_multiplier) VALUES (?, ?, 'standard', 1.00)");
-        $sNum = "A$i";
-        $stmt->bind_param("is", $roomId, $sNum);
-        $stmt->execute();
+function generateDefaultSeatsForRoom(mysqli $conn, int $roomId): void
+{
+    $rows = [
+        'A' => ['standard', 1.00, 1],
+        'B' => ['standard', 1.00, 1],
+        'C' => ['vip', 1.25, 1],
+        'D' => ['couple', 1.80, 2],
+    ];
+    $stmt = $conn->prepare('INSERT INTO seats (room_id, seat_number, seat_type, price_multiplier) VALUES (?, ?, ?, ?)');
+    $total = 0;
+    foreach ($rows as $row => [$type, $price, $step]) {
+        for ($i = 1; $i <= 8; $i += $step) {
+            $number = $row . $i;
+            if ($step === 2) {
+                $number .= '-' . $row . ($i + 1);
+            }
+            $stmt->bind_param('issd', $roomId, $number, $type, $price);
+            $stmt->execute();
+            $total++;
+        }
     }
-    // Hàng B (Standard): B1 -> B8
-    for ($i = 1; $i <= 8; $i++) {
-        $stmt = $conn->prepare("INSERT INTO seats (room_id, seat_number, seat_type, price_multiplier) VALUES (?, ?, 'standard', 1.00)");
-        $sNum = "B$i";
-        $stmt->bind_param("is", $roomId, $sNum);
-        $stmt->execute();
-    }
-    // Hàng C (VIP): C1 -> C8
-    for ($i = 1; $i <= 8; $i++) {
-        $stmt = $conn->prepare("INSERT INTO seats (room_id, seat_number, seat_type, price_multiplier) VALUES (?, ?, 'vip', 1.25)");
-        $sNum = "C$i";
-        $stmt->bind_param("is", $roomId, $sNum);
-        $stmt->execute();
-    }
-    // Hàng D (Couple): 4 cặp ghế đôi
-    $couples = ['D1-D2', 'D3-D4', 'D5-D6', 'D7-D8'];
-    foreach ($couples as $cp) {
-        $stmt = $conn->prepare("INSERT INTO seats (room_id, seat_number, seat_type, price_multiplier) VALUES (?, ?, 'couple', 1.80)");
-        $stmt->bind_param("is", $roomId, $cp);
-        $stmt->execute();
-    }
-    // Cập nhật tổng số ghế phòng = 28
-    $conn->query("UPDATE rooms SET total_seats = 28 WHERE id = $roomId");
+    $update = $conn->prepare('UPDATE rooms SET total_seats = ? WHERE id = ?');
+    $update->bind_param('ii', $total, $roomId);
+    $update->execute();
 }
 
 // Lấy danh sách rạp
@@ -194,6 +196,7 @@ if ($selectedCinemaId > 0) {
 }
 $roomQuery .= " ORDER BY r.cinema_id ASC, r.id ASC";
 $rooms = $conn->query($roomQuery);
+require_once __DIR__ . '/header.php';
 ?>
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -250,12 +253,15 @@ $rooms = $conn->query($roomQuery);
                                                 title="Sửa rạp">
                                             <i class="fa-solid fa-pen"></i>
                                         </button>
-                                        <a href="cinemas.php?delete_cinema=<?= $c['id'] ?>" 
-                                           class="btn btn-outline-danger" 
-                                           data-confirm="Bạn có chắc chắn muốn xóa rạp '<?= htmlspecialchars(addslashes($c['name'])) ?>'? Toàn bộ phòng chiếu sẽ bị xóa!"
-                                           title="Xóa rạp">
-                                            <i class="fa-solid fa-trash"></i>
-                                        </a>
+                                        <form method="POST" class="d-inline">
+                                            <?php admin_csrf_field(); ?>
+                                            <input type="hidden" name="delete_cinema" value="<?= $c['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                    data-confirm="Bạn có chắc chắn muốn xóa rạp '<?= htmlspecialchars(addslashes($c['name'])) ?>'? Toàn bộ phòng chiếu sẽ bị xóa!"
+                                                    title="Xóa rạp">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -323,6 +329,10 @@ $rooms = $conn->query($roomQuery);
                                     </td>
                                     <td class="text-end">
                                         <div class="btn-group btn-group-sm">
+                                            <a class="btn btn-outline-primary" href="seats.php?room_id=<?= (int) $r['id'] ?>"
+                                               title="Chỉnh sửa sơ đồ ghế" aria-label="Chỉnh sửa sơ đồ ghế">
+                                                <i class="fa-solid fa-chair"></i>
+                                            </a>
                                             <!-- Nút xem sơ đồ ghế của phòng -->
                                             <button class="btn btn-outline-info" 
                                                     onclick="viewRoomSeats(<?= $r['id'] ?>, '<?= htmlspecialchars(addslashes($r['name'])) ?>')"
@@ -336,12 +346,15 @@ $rooms = $conn->query($roomQuery);
                                                 <i class="fa-solid fa-pen"></i>
                                             </button>
                                             <!-- Nút xóa phòng -->
-                                            <a href="cinemas.php?delete_room=<?= $r['id'] ?>" 
-                                               class="btn btn-outline-danger" 
-                                               data-confirm="Bạn có chắc muốn xóa phòng chiếu '<?= htmlspecialchars(addslashes($r['name'])) ?>'?"
-                                               title="Xóa phòng">
-                                                <i class="fa-solid fa-trash"></i>
-                                            </a>
+                                            <form method="POST" class="d-inline">
+                                                <?php admin_csrf_field(); ?>
+                                                <input type="hidden" name="delete_room" value="<?= $r['id'] ?>">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                        data-confirm="Bạn có chắc muốn xóa phòng chiếu '<?= htmlspecialchars(addslashes($r['name'])) ?>'?"
+                                                        title="Xóa phòng">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>
@@ -365,6 +378,7 @@ $rooms = $conn->query($roomQuery);
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <form method="POST">
+                <?php admin_csrf_field(); ?>
                 <input type="hidden" name="action" value="save_cinema">
                 <input type="hidden" name="id" id="cinema_id" value="0">
 
@@ -400,6 +414,7 @@ $rooms = $conn->query($roomQuery);
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <form method="POST">
+                <?php admin_csrf_field(); ?>
                 <input type="hidden" name="action" value="save_room">
                 <input type="hidden" name="room_id" id="modal_room_id" value="0">
 
@@ -480,6 +495,7 @@ $rooms = $conn->query($roomQuery);
             </div>
             <div class="modal-footer bg-light d-flex justify-content-between">
                 <form method="POST" id="regenSeatForm" class="d-inline">
+                    <?php admin_csrf_field(); ?>
                     <input type="hidden" name="action" value="regenerate_seats">
                     <input type="hidden" name="room_id" id="regen_room_id" value="0">
                     <button type="submit" class="btn btn-outline-warning btn-sm" data-confirm="Hành động này sẽ tạo lại cấu hình 28 ghế tiêu chuẩn cho phòng. Bạn có chắc chắn không?">
@@ -556,7 +572,7 @@ function viewRoomSeats(roomId, roomName) {
             // Nhóm theo hàng (ký tự đầu tiên của số ghế)
             const rows = {};
             data.seats.forEach(seat => {
-                const rowKey = seat.seat_number.charAt(0);
+                const rowKey = seat.seat_number.match(/^[A-Z]+/i)?.[0] || seat.seat_number.charAt(0);
                 if (!rows[rowKey]) rows[rowKey] = [];
                 rows[rowKey].push(seat);
             });

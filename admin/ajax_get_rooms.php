@@ -4,7 +4,7 @@
  * File: admin/ajax_get_rooms.php
  */
 header('Content-Type: application/json; charset=utf-8');
-require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/auth.php';
 
 $cinemaId = isset($_GET['cinema_id']) ? (int)$_GET['cinema_id'] : 0;
 

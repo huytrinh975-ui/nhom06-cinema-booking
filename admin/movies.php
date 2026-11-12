@@ -4,7 +4,7 @@
  * File: admin/movies.php
  */
 $page_title = 'Quản Lý Phim';
-require_once __DIR__ . '/header.php';
+require_once __DIR__ . '/auth.php';
 
 // Xử lý các thao tác Thêm / Sửa / Xóa / Đổi trạng thái
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
@@ -20,6 +20,12 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
         $trailer_url = trim($_POST['trailer_url'] ?? '');
         $status = $_POST['status'] ?? 'showing';
         $poster = trim($_POST['poster_url'] ?? '');
+        $genreIds = array_unique(array_map('intval', (array) ($_POST['genre_ids'] ?? [])));
+        if ($title === '' || $duration <= 0 || $release_date === '' || !in_array($status, ['showing', 'upcoming', 'hidden'], true)) {
+            $_SESSION['flash_error'] = 'Vui lòng điền đầy đủ tên phim, thời lượng, ngày phát hành và trạng thái hợp lệ.';
+            admin_redirect('movies.php');
+        }
+        $destination = null;
 
         // Xử lý upload file ảnh poster nếu có
         if (isset($_FILES['poster_file']) && $_FILES['poster_file']['error'] === UPLOAD_ERR_OK) {
@@ -34,40 +40,49 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
-                $destination = $uploadDir . $newFileName;
-                if (move_uploaded_file($fileTmp, $destination)) {
+                $uploadPath = $uploadDir . $newFileName;
+                if (move_uploaded_file($fileTmp, $uploadPath)) {
+                    $destination = $uploadPath;
                     $poster = '../uploads/movies/' . $newFileName;
                 }
             }
         }
 
-        if (empty($title) || $duration <= 0 || empty($release_date)) {
-            $_SESSION['flash_error'] = 'Vui lòng điền đầy đủ tên phim, thời lượng hợp lệ và ngày phát hành!';
-        } else {
+        $conn->begin_transaction();
+        try {
             if ($id > 0) {
-                // Cập nhật phim
-                $stmt = $conn->prepare("UPDATE movies SET title = ?, description = ?, duration = ?, release_date = ?, poster = ?, trailer_url = ?, status = ? WHERE id = ?");
-                $stmt->bind_param("ssissssi", $title, $description, $duration, $release_date, $poster, $trailer_url, $status, $id);
-                if ($stmt->execute()) {
-                    $_SESSION['flash_success'] = 'Cập nhật thông tin phim thành công!';
-                } else {
-                    $_SESSION['flash_error'] = 'Có lỗi xảy ra: ' . $conn->error;
-                }
-                $stmt->close();
+                $stmt = $conn->prepare('UPDATE movies SET title = ?, description = ?, duration = ?, release_date = ?, poster = ?, trailer_url = ?, status = ? WHERE id = ?');
+                $stmt->bind_param('ssissssi', $title, $description, $duration, $release_date, $poster, $trailer_url, $status, $id);
+                $stmt->execute();
+                $deleteGenres = $conn->prepare('DELETE FROM movie_genres WHERE movie_id = ?');
+                $deleteGenres->bind_param('i', $id);
+                $deleteGenres->execute();
             } else {
-                // Thêm mới phim
-                $stmt = $conn->prepare("INSERT INTO movies (title, description, duration, release_date, poster, trailer_url, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("ssissss", $title, $description, $duration, $release_date, $poster, $trailer_url, $status);
-                if ($stmt->execute()) {
-                    $_SESSION['flash_success'] = 'Thêm phim mới thành công!';
-                } else {
-                    $_SESSION['flash_error'] = 'Có lỗi xảy ra khi thêm phim: ' . $conn->error;
-                }
-                $stmt->close();
+                $stmt = $conn->prepare('INSERT INTO movies (title, description, duration, release_date, poster, trailer_url, status) VALUES (?, ?, ?, ?, ?, ?, ?)');
+                $stmt->bind_param('ssissss', $title, $description, $duration, $release_date, $poster, $trailer_url, $status);
+                $stmt->execute();
+                $id = $stmt->insert_id;
             }
+            if ($genreIds) {
+                $addGenre = $conn->prepare('INSERT INTO movie_genres (movie_id, genre_id) VALUES (?, ?)');
+                foreach ($genreIds as $genreId) {
+                    $addGenre->bind_param('ii', $id, $genreId);
+                    $addGenre->execute();
+                }
+            }
+            $conn->commit();
+            $_SESSION['flash_success'] = 'Đã lưu thông tin phim.';
+        } catch (mysqli_sql_exception $e) {
+            $conn->rollback();
+            if ($destination !== null) {
+                unlink($destination);
+            }
+            if ((int) $e->getCode() !== 1452) {
+                throw $e;
+            }
+            $_SESSION['flash_error'] = 'Phim hoặc thể loại đã thay đổi. Vui lòng kiểm tra và thử lại.';
         }
-        header("Location: movies.php");
-        exit;
+        admin_redirect('movies.php');
     }
 
     // 2. Chuyển đổi trạng thái nhanh
@@ -81,14 +96,13 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             $stmt->close();
             $_SESSION['flash_success'] = 'Cập nhật trạng thái phim thành công!';
         }
-        header("Location: movies.php");
-        exit;
+        admin_redirect('movies.php');
     }
 }
 
-// Xử lý Xóa phim qua GET
-if (isset($_GET['delete_id'])) {
-    $deleteId = (int)$_GET['delete_id'];
+// Xử lý Xóa phim
+if (isset($_POST['delete_id'])) {
+    $deleteId = (int)$_POST['delete_id'];
     
     // Kiểm tra xem phim có suất chiếu liên quan không
     $checkStmt = $conn->prepare("SELECT COUNT(*) as cnt FROM showtimes WHERE movie_id = ?");
@@ -109,15 +123,19 @@ if (isset($_GET['delete_id'])) {
         }
         $delStmt->close();
     }
-    header("Location: movies.php");
-    exit;
+    admin_redirect('movies.php');
 }
 
 // Lọc và Tìm kiếm
 $search = trim($_GET['search'] ?? '');
 $filter_status = $_GET['status'] ?? 'all';
 
-$sql = "SELECT m.*, (SELECT COUNT(*) FROM showtimes s WHERE s.movie_id = m.id) AS total_showtimes 
+$genres = $conn->query("SELECT id, name FROM genres ORDER BY name")->fetch_all(MYSQLI_ASSOC);
+
+$sql = "SELECT m.*,
+        (SELECT GROUP_CONCAT(g.name ORDER BY g.name SEPARATOR ', ') FROM movie_genres mg JOIN genres g ON g.id = mg.genre_id WHERE mg.movie_id = m.id) AS genre_names,
+        (SELECT GROUP_CONCAT(genre_id) FROM movie_genres WHERE movie_id = m.id) AS genre_ids,
+        (SELECT COUNT(*) FROM showtimes s WHERE s.movie_id = m.id) AS total_showtimes
         FROM movies m WHERE 1=1";
 $params = [];
 $types = "";
@@ -141,6 +159,7 @@ if (!empty($params)) {
 }
 $stmt->execute();
 $movies = $stmt->get_result();
+require_once __DIR__ . '/header.php';
 ?>
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
@@ -210,6 +229,9 @@ $movies = $stmt->get_result();
                                 <div class="text-muted small mt-1">
                                     <i class="fa-regular fa-clock me-1 text-primary"></i><?= (int)$m['duration'] ?> phút
                                 </div>
+                                <?php if ($m['genre_names']): ?>
+                                    <div class="small text-primary mt-1"><?= htmlspecialchars($m['genre_names']) ?></div>
+                                <?php endif; ?>
                                 <div class="text-muted small text-truncate" style="max-width: 320px;" title="<?= htmlspecialchars($m['description'] ?? '') ?>">
                                     <?= htmlspecialchars($m['description'] ?? 'Chưa có mô tả') ?>
                                 </div>
@@ -235,6 +257,7 @@ $movies = $stmt->get_result();
                             </td>
                             <td>
                                 <form method="POST" class="d-inline">
+                                    <?php admin_csrf_field(); ?>
                                     <input type="hidden" name="action" value="toggle_status">
                                     <input type="hidden" name="id" value="<?= $m['id'] ?>">
                                     <select name="new_status" class="form-select form-select-sm fw-semibold rounded-pill" 
@@ -253,12 +276,15 @@ $movies = $stmt->get_result();
                                             title="Sửa thông tin">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
-                                    <a href="movies.php?delete_id=<?= $m['id'] ?>" 
-                                       class="btn btn-outline-danger" 
-                                       data-confirm="Bạn có chắc chắn muốn xóa bộ phim '<?= htmlspecialchars(addslashes($m['title'])) ?>'?"
-                                       title="Xóa phim">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </a>
+                                    <form method="POST" class="d-inline">
+                                        <?php admin_csrf_field(); ?>
+                                        <input type="hidden" name="delete_id" value="<?= $m['id'] ?>">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                data-confirm="Bạn có chắc chắn muốn xóa bộ phim '<?= htmlspecialchars(addslashes($m['title'])) ?>'?"
+                                                title="Xóa phim">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -281,6 +307,7 @@ $movies = $stmt->get_result();
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0 shadow">
             <form method="POST" enctype="multipart/form-data">
+                <?php admin_csrf_field(); ?>
                 <input type="hidden" name="action" value="save">
                 <input type="hidden" name="id" id="movie_id" value="0">
 
@@ -317,7 +344,7 @@ $movies = $stmt->get_result();
 
                         <div class="col-12 col-md-6">
                             <label class="form-label fw-semibold">URL Poster (Ảnh bìa)</label>
-                            <input type="url" name="poster_url" id="movie_poster_url" class="form-control" placeholder="https://example.com/poster.jpg">
+                            <input type="text" inputmode="url" name="poster_url" id="movie_poster_url" class="form-control" placeholder="https://example.com/poster.jpg">
                             <small class="text-muted">Hoặc có thể tải ảnh lên ở bên dưới</small>
                         </div>
                         <div class="col-12 col-md-6">
@@ -330,6 +357,21 @@ $movies = $stmt->get_result();
                             <input type="url" name="trailer_url" id="movie_trailer_url" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
                         </div>
 
+                        <fieldset class="col-12">
+                            <legend class="form-label fw-semibold fs-6">Thể loại phim</legend>
+                            <?php if ($genres): ?>
+                                <div class="d-flex flex-wrap gap-3">
+                                    <?php foreach ($genres as $genre): ?>
+                                        <label class="form-check">
+                                            <input type="checkbox" class="form-check-input" name="genre_ids[]" value="<?= (int) $genre['id'] ?>">
+                                            <span class="form-check-label"><?= htmlspecialchars($genre['name']) ?></span>
+                                        </label>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else: ?>
+                                <a href="genres.php">Thêm thể loại phim</a>
+                            <?php endif; ?>
+                        </fieldset>
                         <div class="col-12">
                             <label class="form-label fw-semibold">Mô tả tóm tắt nội dung phim</label>
                             <textarea name="description" id="movie_description" class="form-control" rows="4" placeholder="Nhập tóm tắt cốt truyện, diễn viên, đạo diễn..."></textarea>
@@ -347,6 +389,12 @@ $movies = $stmt->get_result();
 </div>
 
 <script>
+function selectMovieGenres(ids) {
+    document.querySelectorAll('#movieModal input[name="genre_ids[]"]').forEach(input => {
+        input.checked = ids.includes(input.value);
+    });
+}
+
 function openAddMovieModal() {
     document.getElementById('movieModalTitle').innerHTML = '<i class="fa-solid fa-film text-primary me-2"></i>Thêm Phim Mới';
     document.getElementById('movie_id').value = '0';
@@ -357,6 +405,7 @@ function openAddMovieModal() {
     document.getElementById('movie_poster_url').value = '';
     document.getElementById('movie_trailer_url').value = '';
     document.getElementById('movie_description').value = '';
+    selectMovieGenres([]);
     document.getElementById('movieSubmitBtn').innerText = 'Thêm Phim';
 }
 
@@ -370,6 +419,7 @@ function openEditMovieModal(movie) {
     document.getElementById('movie_poster_url').value = movie.poster || '';
     document.getElementById('movie_trailer_url').value = movie.trailer_url || '';
     document.getElementById('movie_description').value = movie.description || '';
+    selectMovieGenres((movie.genre_ids || '').split(','));
     document.getElementById('movieSubmitBtn').innerText = 'Lưu Thay Đổi';
 
     const modal = new bootstrap.Modal(document.getElementById('movieModal'));
