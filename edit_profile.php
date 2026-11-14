@@ -3,9 +3,14 @@ require_once 'config/database.php';
 require_once 'includes/auth.php';
 requireLogin();
 
-$stmt = $conn->prepare('SELECT full_name, email, phone FROM users WHERE id = ? LIMIT 1');
-$stmt->execute([$_SESSION['user_id']]);
-$user = $stmt->fetch();
+$userId = (int)$_SESSION['user_id'];
+$stmt = $conn->prepare('SELECT fullname, fullname AS full_name, email, phone FROM users WHERE id = ? LIMIT 1');
+$stmt->bind_param('i', $userId);
+$stmt->execute();
+$res = $stmt->get_result();
+$user = $res ? $res->fetch_assoc() : null;
+$stmt->close();
+
 if (!$user) { header('Location: logout.php'); exit; }
 
 $error = '';
@@ -21,13 +26,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!preg_match('/^[0-9+\s().-]{8,20}$/', $phone)) {
         $error = 'Số điện thoại không hợp lệ.';
     } else {
-        $update = $conn->prepare('UPDATE users SET full_name = ?, phone = ? WHERE id = ?');
-        $update->execute([$fullname, $phone, $_SESSION['user_id']]);
+        $update = $conn->prepare('UPDATE users SET fullname = ?, phone = ? WHERE id = ?');
+        $update->bind_param('ssi', $fullname, $phone, $userId);
+        $update->execute();
+        $update->close();
         $_SESSION['full_name'] = $fullname;
+        $_SESSION['fullname'] = $fullname;
         setFlash('success', 'Thông tin cá nhân đã được cập nhật.');
         header('Location: profile.php');
         exit;
     }
+    $user['fullname'] = $fullname;
     $user['full_name'] = $fullname;
     $user['phone'] = $phone;
 }
@@ -40,9 +49,9 @@ require_once 'includes/header.php';
     <div class="form-heading"><div class="section-kicker">EDIT YOUR PROFILE</div><h1>Chỉnh sửa thông tin</h1><p>Cập nhật thông tin liên hệ của bạn.</p></div>
     <?php if ($error): ?><div class="alert alert-error"><?= e($error) ?></div><?php endif; ?>
     <div class="edit-card">
-        <form method="post" class="form-stack">
+        <form method="post" action="edit_profile.php" class="form-stack">
             <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
-            <label>Họ và tên<input name="fullname" type="text" maxlength="100" value="<?= e($user['full_name']) ?>" required></label>
+            <label>Họ và tên<input name="fullname" type="text" maxlength="100" value="<?= e($user['fullname']) ?>" required></label>
             <label>Email<input type="email" value="<?= e($user['email']) ?>" disabled><small class="field-help">Email đăng nhập hiện chưa thể thay đổi.</small></label>
             <label>Số điện thoại<input name="phone" type="tel" maxlength="20" value="<?= e($user['phone']) ?>" required></label>
             <div class="form-actions"><a class="btn btn-outline" href="profile.php">Hủy</a><button class="btn btn-primary" type="submit">Lưu thay đổi <span>→</span></button></div>

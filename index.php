@@ -14,11 +14,7 @@ require_once 'includes/header.php';
                 <a class="btn btn-primary" href="profile.php">Xem tài khoản <span>→</span></a>
             <?php else: ?>
                 <a class="btn btn-primary" href="register.php">Tạo tài khoản <span>→</span></a>
-<<<<<<< HEAD
                 <a class="btn btn-outline" href="login.php">Đăng nhập</a>
-=======
-                <a classx="btn btn-outline" href="login.php">Đăng nhập</a>
->>>>>>> 149e6a191053cfc6574a646ed3f89a21c72c0d24
             <?php endif; ?>
         </div>
         <div class="hero-meta"><span>✦</span> CINEMA • STORIES • EXPERIENCE</div>
