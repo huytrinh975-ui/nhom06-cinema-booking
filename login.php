@@ -1,17 +1,25 @@
+<<<<<<< HEAD
 ```php
+=======
+>>>>>>> 149e6a191053cfc6574a646ed3f89a21c72c0d24
 <?php
 require_once 'config/database.php';
 require_once 'includes/auth.php';
 
+<<<<<<< HEAD
 // Nếu đã đăng nhập thì chuyển đến trang cá nhân
 if (isLoggedIn()) {
     header('Location: profile.php');
     exit;
 }
+=======
+if (isLoggedIn()) { header('Location: profile.php'); exit; }
+>>>>>>> 149e6a191053cfc6574a646ed3f89a21c72c0d24
 
 $error = '';
 $email = '';
 
+<<<<<<< HEAD
 // Xử lý khi gửi form đăng nhập
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
@@ -260,3 +268,54 @@ require_once 'includes/header.php';
 
 <?php require_once 'includes/footer.php'; ?>
 ```
+=======
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    verifyCsrfToken();
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if ($email === '' || $password === '') {
+        $error = 'Vui lòng nhập email và mật khẩu.';
+    } else {
+        $stmt = $conn->prepare('SELECT id, full_name, email, password, role FROM users WHERE email = ? LIMIT 1');
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($password, $user['password'])) {
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = (int)$user['id'];
+            $_SESSION['full_name'] = $user['full_name'];
+            $_SESSION['email'] = $user['email'];
+            $_SESSION['role'] = $user['role'];
+            setFlash('success', 'Đăng nhập thành công. Xin chào ' . $user['full_name'] . '!');
+            header('Location: profile.php');
+            exit;
+        }
+        $error = 'Email hoặc mật khẩu chưa chính xác.';
+    }
+}
+
+$pageTitle = 'Đăng nhập';
+require_once 'includes/header.php';
+?>
+<section class="auth-section auth-login">
+    <div class="auth-aside">
+        <div class="aside-label">WELCOME BACK</div>
+        <h1>Ánh đèn<br>sắp bật.<br><em>Bạn đã sẵn sàng?</em></h1>
+        <p>Đăng nhập để tiếp tục hành trình cùng MovieBooking.</p>
+        <div class="aside-stamp">M<br><small>MB CLUB</small></div>
+    </div>
+    <div class="auth-panel">
+        <div class="form-heading"><div class="section-kicker">MEMBER SIGN IN</div><h2>Chào mừng trở lại</h2><p>Đăng nhập bằng tài khoản của bạn.</p></div>
+        <?php if ($error): ?><div class="alert alert-error"><?= e($error) ?></div><?php endif; ?>
+        <form method="post" class="form-stack">
+            <input type="hidden" name="csrf_token" value="<?= e(csrfToken()) ?>">
+            <label>Email<input name="email" type="email" autocomplete="username" placeholder="you@example.com" value="<?= e($email) ?>" required></label>
+            <label>Mật khẩu<input name="password" type="password" autocomplete="current-password" placeholder="Nhập mật khẩu" required></label>
+            <button class="btn btn-primary btn-wide" type="submit">Đăng nhập <span>→</span></button>
+        </form>
+        <p class="form-switch">Chưa có tài khoản? <a href="register.php">Đăng ký ngay</a></p>
+    </div>
+</section>
+<?php require_once 'includes/footer.php'; ?>
+>>>>>>> 149e6a191053cfc6574a646ed3f89a21c72c0d24

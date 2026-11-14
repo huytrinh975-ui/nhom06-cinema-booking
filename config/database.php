@@ -1,4 +1,5 @@
 <?php
+<<<<<<< HEAD
 declare(strict_types=1);
 
 $host = 'localhost';
@@ -21,3 +22,59 @@ try {
     http_response_code(500);
     exit('Không thể kết nối cơ sở dữ liệu. Hãy kiểm tra MySQL và config/database.php.');
 }
+=======
+/**
+ * Kết nối Cơ sở dữ liệu MySQL (MySQLi)
+ * Dự án: Hệ thống đặt vé xem phim trực tuyến (nhom06-cinema-booking)
+ */
+
+$db_host = 'localhost';
+$db_user = 'root';
+$db_pass = '';
+$db_name = 'cinema_booking_db';
+$db_port = 3306;
+
+// Khởi tạo kết nối MySQLi
+$conn = new mysqli($db_host, $db_user, $db_pass, $db_name, $db_port);
+
+// Kiểm tra lỗi kết nối
+if ($conn->connect_error) {
+    die("<div style='font-family: Arial; padding: 20px; background: #ffebee; border: 1px solid #f44336; border-radius: 8px; margin: 20px auto; max-width: 600px;'>
+            <h3 style='color: #c62828; margin-top: 0;'><i class='fa fa-exclamation-triangle'></i> Lỗi kết nối Cơ sở dữ liệu!</h3>
+            <p><strong>Chi tiết:</strong> " . htmlspecialchars($conn->connect_error) . "</p>
+            <p>Vui lòng đảm bảo dịch vụ MySQL trong XAMPP đang chạy và bạn đã nhập file <code>database.sql</code> vào phpMyAdmin.</p>
+        </div>");
+}
+
+// Thiết lập bảng mã utf8mb4 hỗ trợ tiếng Việt có dấu và biểu tượng đầy đủ
+$conn->set_charset("utf8mb4");
+
+/**
+ * Hàm định dạng tiền tệ VND
+ */
+if (!function_exists('format_currency')) {
+    function format_currency($amount) {
+        return number_format($amount, 0, ',', '.') . ' ₫';
+    }
+}
+
+/**
+ * Hàm định dạng ngày giờ chuẩn Việt Nam
+ */
+if (!function_exists('format_datetime')) {
+    function format_datetime($datetime) {
+        if (!$datetime) return '';
+        $time = strtotime($datetime);
+        return date('d/m/Y H:i', $time);
+    }
+}
+
+if (!function_exists('format_date')) {
+    function format_date($date) {
+        if (!$date) return '';
+        $time = strtotime($date);
+        return date('d/m/Y', $time);
+    }
+}
+
+>>>>>>> 149e6a191053cfc6574a646ed3f89a21c72c0d24
