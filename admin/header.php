@@ -249,30 +249,46 @@ $page_title = $page_title ?? 'Hệ Thống Quản Trị';
         /* Modern Table */
         .table-custom {
             margin-bottom: 0;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
         }
 
         .table-custom thead th {
             background-color: #f8fafc;
             color: #475569;
             font-weight: 600;
-            font-size: 0.83rem;
+            font-size: 0.78rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.03em;
             border-bottom: 1px solid #e2e8f0;
-            padding: 14px 16px;
+            padding: 9px 8px;
             vertical-align: middle;
+            white-space: nowrap;
         }
 
         .table-custom tbody td {
-            padding: 14px 16px;
+            padding: 10px 8px;
             vertical-align: middle;
             border-bottom: 1px solid #f1f5f9;
             color: #334155;
-            font-size: 0.92rem;
+            font-size: 0.84rem;
+            line-height: 1.35;
         }
 
-        .table-custom tbody tr:hover {
+        .table-custom tbody tr:hover td {
             background-color: #f8fafc;
+        }
+
+        .table-custom .badge {
+            font-weight: 500;
+            font-size: 0.74rem;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 3px 6px;
         }
 
         /* Seat Matrix Visual Styles */

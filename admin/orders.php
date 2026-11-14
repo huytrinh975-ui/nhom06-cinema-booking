@@ -190,96 +190,105 @@ $orders = $stmt->get_result();
         <table class="table table-custom align-middle">
             <thead>
                 <tr>
-                    <th>Mã Đơn</th>
-                    <th>Khách Hàng</th>
-                    <th>Phim & Suất Chiếu</th>
-                    <th>Ghế Đã Đặt</th>
-                    <th>Tổng Tiền</th>
-                    <th>Thanh Toán</th>
-                    <th>Trạng Thái</th>
-                    <th>Thời Gian</th>
-                    <th class="text-end" style="width: 140px;">Hành Động</th>
+                    <th style="width: 10%;">Mã Đơn</th>
+                    <th style="width: 12%;">Khách Hàng</th>
+                    <th style="width: 22%;">Phim & Suất Chiếu</th>
+                    <th style="width: 9%;">Ghế Đã Đặt</th>
+                    <th style="width: 10%;">Tổng Tiền</th>
+                    <th style="width: 11%;">Thanh Toán</th>
+                    <th style="width: 9%;">Trạng Thái</th>
+                    <th style="width: 9%;">Thời Gian</th>
+                    <th class="text-end" style="width: 8%;">Hành Động</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if ($orders && $orders->num_rows > 0): ?>
                     <?php while ($ord = $orders->fetch_assoc()): ?>
                         <tr>
-                            <td>
-                                <span class="fw-bold font-monospace text-primary"><?= htmlspecialchars($ord['booking_code']) ?></span>
+                            <td class="text-nowrap">
+                                <span class="fw-bold font-monospace text-primary" style="font-size: 0.78rem; letter-spacing: 0.02em;">
+                                    <?= htmlspecialchars($ord['booking_code']) ?>
+                                </span>
                             </td>
                             <td>
-                                <div class="fw-semibold text-slate-800"><?= htmlspecialchars($ord['fullname']) ?></div>
-                                <div class="text-muted small">
-                                    <i class="fa-solid fa-phone me-1"></i><?= htmlspecialchars($ord['phone'] ?: 'N/A') ?>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="fw-bold text-slate-800 text-truncate" style="max-width: 200px;" title="<?= htmlspecialchars($ord['movie_title']) ?>">
-                                    <?= htmlspecialchars($ord['movie_title']) ?>
-                                </div>
-                                <div class="text-muted small">
-                                    <?= htmlspecialchars($ord['cinema_name']) ?> &bull; <?= htmlspecialchars($ord['room_name']) ?>
-                                </div>
-                                <div class="text-primary small">
-                                    <i class="fa-regular fa-clock me-1"></i><?= format_datetime($ord['start_time']) ?>
+                                <div class="d-flex flex-column gap-1 lh-sm">
+                                    <span class="fw-semibold text-dark text-nowrap" style="font-size: 0.82rem;"><?= htmlspecialchars($ord['fullname']) ?></span>
+                                    <span class="text-muted small d-inline-flex align-items-center text-nowrap" style="font-size: 0.75rem;">
+                                        <i class="fa-solid fa-phone me-1 opacity-75" style="font-size: 0.68rem;"></i><?= htmlspecialchars($ord['phone'] ?: 'N/A') ?>
+                                    </span>
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-light text-dark border px-2 py-1">
+                                <div class="d-flex flex-column gap-1 lh-sm" style="max-width: 175px;">
+                                    <div class="fw-bold text-dark text-truncate" title="<?= htmlspecialchars($ord['movie_title']) ?>">
+                                        <?= htmlspecialchars($ord['movie_title']) ?>
+                                    </div>
+                                    <div class="text-muted small text-truncate" title="<?= htmlspecialchars($ord['cinema_name'] . ' • ' . $ord['room_name']) ?>" style="font-size: 0.75rem;">
+                                        <?= htmlspecialchars($ord['cinema_name']) ?> &bull; <?= htmlspecialchars($ord['room_name']) ?>
+                                    </div>
+                                    <div class="text-primary small fw-medium d-inline-flex align-items-center text-nowrap" style="font-size: 0.75rem;">
+                                        <i class="fa-regular fa-clock me-1"></i><?= format_datetime($ord['start_time']) ?>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-nowrap">
+                                <span class="badge bg-light text-dark border d-inline-flex align-items-center px-2 py-1">
                                     <i class="fa-solid fa-chair text-secondary me-1"></i><?= htmlspecialchars($ord['seat_list'] ?: 'Chưa có ghế') ?>
                                 </span>
-                                <div class="text-muted small mt-1">(<?= $ord['total_tickets'] ?> vé)</div>
+                                <div class="text-muted small mt-1" style="font-size: 0.72rem;">(<?= (int)$ord['total_tickets'] ?> vé)</div>
                             </td>
-                            <td>
-                                <span class="fw-bold text-success fs-6">
+                            <td class="text-nowrap">
+                                <span class="fw-bold text-success" style="font-size: 0.88rem;">
                                     <?= format_currency($ord['total_amount']) ?>
                                 </span>
                             </td>
-                            <td>
+                            <td class="text-nowrap">
                                 <?php if ($ord['payment_status'] === 'paid'): ?>
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle">
                                         <i class="fa-solid fa-check me-1"></i>Đã thanh toán
                                     </span>
                                 <?php elseif ($ord['payment_status'] === 'pending'): ?>
-                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1">
-                                        <i class="fa-solid fa-hourglass me-1"></i>Chờ xử lý
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                        <i class="fa-solid fa-hourglass-half me-1"></i>Chờ xử lý
                                     </span>
                                 <?php else: ?>
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
                                         <i class="fa-solid fa-xmark me-1"></i>Thất bại
                                     </span>
                                 <?php endif; ?>
                             </td>
-                            <td>
+                            <td class="text-nowrap">
                                 <?php if ($ord['booking_status'] === 'confirmed'): ?>
-                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1">Đã xác nhận</span>
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">Đã xác nhận</span>
                                 <?php elseif ($ord['booking_status'] === 'pending'): ?>
-                                    <span class="badge bg-secondary-subtle text-secondary px-2 py-1">Chờ duyệt</span>
+                                    <span class="badge bg-secondary-subtle text-secondary">Chờ duyệt</span>
                                 <?php else: ?>
-                                    <span class="badge bg-light text-muted border px-2 py-1">Đã hủy</span>
+                                    <span class="badge bg-light text-muted border">Đã hủy</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-muted small">
-                                <?= format_datetime($ord['created_at']) ?>
+                            <td class="text-nowrap">
+                                <div class="d-flex flex-column gap-1 text-muted lh-1" style="font-size: 0.78rem;">
+                                    <span class="fw-semibold text-dark"><?= date('d/m/Y', strtotime($ord['created_at'])) ?></span>
+                                    <span><i class="fa-regular fa-clock me-1 opacity-75"></i><?= date('H:i', strtotime($ord['created_at'])) ?></span>
+                                </div>
                             </td>
-                            <td class="text-end">
+                            <td class="text-end text-nowrap">
                                 <div class="btn-group btn-group-sm">
                                     <!-- Xem chi tiết modal -->
-                                    <button class="btn btn-outline-primary" 
+                                    <button class="btn btn-outline-primary" style="padding: 3px 6px; font-size: 0.72rem;" 
                                             onclick="viewOrderDetail(<?= $ord['id'] ?>)" 
                                             title="Xem chi tiết đơn & ghế">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
                                     <!-- Đổi trạng thái modal -->
-                                    <button class="btn btn-outline-secondary" 
+                                    <button class="btn btn-outline-secondary" style="padding: 3px 6px; font-size: 0.72rem;" 
                                             onclick="openUpdateStatusModal(<?= $ord['id'] ?>, '<?= $ord['payment_status'] ?>', '<?= $ord['booking_status'] ?>', '<?= $ord['booking_code'] ?>')" 
                                             title="Cập nhật trạng thái">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
                                     <!-- Xóa đơn -->
                                     <a href="orders.php?delete_id=<?= $ord['id'] ?>" 
-                                       class="btn btn-outline-danger" 
+                                       class="btn btn-outline-danger" style="padding: 3px 6px; font-size: 0.72rem;" 
                                        data-confirm="Bạn có chắc chắn muốn xóa đơn đặt vé '<?= $ord['booking_code'] ?>'?"
                                        title="Xóa đơn">
                                         <i class="fa-solid fa-trash"></i>
