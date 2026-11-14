@@ -1,0 +1,1158 @@
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600;1,700&display=swap');
+
+/* ========================================
+   1. ROOT & RESET
+======================================== */
+
+:root {
+    --bg: #100d18;
+    --panel: #191522;
+    --panel2: #211b2c;
+
+    --text: #f7f1eb;
+    --muted: #aaa1b1;
+
+    --gold: #e6b96b;
+    --gold-light: #f2ce8d;
+
+    --red: #a92d43;
+    --line: rgba(255, 255, 255, .1);
+
+    --max: 1160px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    line-height: 1.6;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button,
+input {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+img {
+    max-width: 100%;
+}
+
+
+/* ========================================
+   2. CONTAINER
+======================================== */
+
+.container {
+    width: min(var(--max), calc(100% - 48px));
+    margin: auto;
+}
+
+
+/* ========================================
+   3. HEADER & NAVIGATION
+======================================== */
+
+.site-header {
+    height: 82px;
+    border-bottom: 1px solid var(--line);
+    background: rgba(16, 13, 24, .92);
+    position: relative;
+    z-index: 5;
+}
+
+.nav-wrap {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.brand-mark {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    display: grid;
+    place-items: center;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+}
+
+.brand-light {
+    font-weight: 400;
+    color: var(--muted);
+}
+
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    font-size: 13px;
+    color: #d0c9d4;
+}
+
+.nav-links > a:not(.btn):hover {
+    color: var(--gold);
+}
+
+.nav-logout {
+    margin: 0;
+}
+
+.menu-toggle {
+    display: none;
+    background: none;
+    color: white;
+    border: 0;
+    font-size: 24px;
+}
+
+
+/* ========================================
+   4. BUTTONS
+======================================== */
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+
+    padding: 13px 21px;
+
+    border: 1px solid transparent;
+    border-radius: 2px;
+
+    font-weight: 700;
+    font-size: 13px;
+
+    cursor: pointer;
+    transition: .2s;
+}
+
+.btn-primary {
+    background: var(--gold);
+    color: #21170c;
+}
+
+.btn-primary:hover {
+    background: var(--gold-light);
+    transform: translateY(-2px);
+}
+
+.btn-outline {
+    border-color: rgba(255, 255, 255, .3);
+    color: var(--text);
+    background: transparent;
+}
+
+.btn-outline:hover,
+.btn-ghost:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.btn-ghost {
+    border-color: var(--line);
+    color: var(--text);
+    background: transparent;
+}
+
+.btn-small {
+    padding: 9px 14px;
+}
+
+.btn-wide {
+    width: 100%;
+}
+
+.role-chip,
+.profile-badge {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--gold);
+    border: 1px solid rgba(230, 185, 107, .4);
+    padding: 5px 9px;
+}
+
+
+/* ========================================
+   5. HERO SECTION
+======================================== */
+
+.hero {
+    min-height: 590px;
+    position: relative;
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            ellipse at 76% 46%,
+            #482334 0%,
+            #211725 32%,
+            #100d18 70%
+        );
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+
+    padding-top: 100px;
+    padding-bottom: 80px;
+
+    max-width: var(--max);
+}
+
+.eyebrow,
+.section-kicker,
+.aside-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    font-weight: 700;
+}
+
+.eyebrow span {
+    display: inline-block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+    vertical-align: middle;
+    margin-right: 10px;
+}
+
+.hero h1,
+.auth-aside h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(48px, 6vw, 76px);
+    line-height: 1.08;
+    letter-spacing: -1.8px;
+    margin: 25px 0;
+}
+
+.hero h1 em,
+.auth-aside h1 em {
+    color: var(--gold);
+    font-weight: 600;
+}
+
+.hero-content > p {
+    max-width: 490px;
+    color: #bcb3c1;
+    font-size: 15px;
+}
+
+.hero-actions {
+    display: flex;
+    gap: 14px;
+    margin-top: 30px;
+}
+
+.hero-meta {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #827887;
+    margin-top: 55px;
+}
+
+.hero-meta span {
+    color: var(--gold);
+    margin-right: 8px;
+}
+
+
+/* ========================================
+   6. HERO ART & POSTER
+======================================== */
+
+.hero-art {
+    position: absolute;
+    right: max(5%, calc((100% - var(--max)) / 2));
+    top: 60px;
+
+    width: 430px;
+    height: 450px;
+    opacity: .9;
+}
+
+.poster {
+    position: absolute;
+
+    width: 220px;
+    height: 340px;
+
+    box-shadow: 0 25px 70px #0009;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+
+    padding: 23px;
+
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 2px;
+    font-size: 25px;
+    line-height: 1.2;
+
+    overflow: hidden;
+}
+
+.poster small {
+    font: 9px 'DM Sans';
+    letter-spacing: 3px;
+    margin-top: 15px;
+}
+
+.poster-back {
+    right: 0;
+    top: 10px;
+    transform: rotate(8deg);
+    background: linear-gradient(150deg, #8b5260, #34203d 50%, #14101d);
+}
+
+.poster-front {
+    left: 30px;
+    top: 75px;
+    transform: rotate(-7deg);
+    background: linear-gradient(145deg, #d18b57, #692d46 48%, #1b1528);
+}
+
+.poster-orbit {
+    position: absolute;
+
+    width: 190px;
+    height: 190px;
+
+    border: 1px solid #f2d3a566;
+    border-radius: 50%;
+
+    top: 25px;
+    left: 15px;
+
+    box-shadow:
+        0 0 0 20px #f2d3a511,
+        0 0 0 42px #f2d3a50a;
+}
+
+.poster-front span,
+.poster-front small {
+    position: relative;
+}
+
+.ticket-float {
+    position: absolute;
+    right: 8px;
+    bottom: 28px;
+
+    background: #f2e7d4;
+    color: #241a20;
+
+    padding: 13px 20px;
+
+    font-size: 9px;
+    letter-spacing: 2px;
+
+    transform: rotate(5deg);
+    box-shadow: 0 8px 25px #0007;
+}
+
+.ticket-float b {
+    color: #a92d43;
+    margin-left: 15px;
+}
+
+
+/* ========================================
+   7. INTRO & FEATURES
+======================================== */
+
+.intro-section {
+    padding-top: 85px;
+    padding-bottom: 100px;
+}
+
+.intro-section h2,
+.page-heading h1,
+.form-heading h1 {
+    font: 600 clamp(30px, 4vw, 42px) 'Playfair Display', serif;
+    margin: 12px 0 35px;
+}
+
+.intro-section h2 span {
+    color: var(--gold);
+    font-style: italic;
+}
+
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
+.feature-card {
+    padding: 28px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+}
+
+.feature-icon {
+    font-size: 26px;
+    color: var(--gold);
+}
+
+.feature-card h3 {
+    font: 600 20px 'Playfair Display', serif;
+    margin: 15px 0 8px;
+}
+
+.feature-card p {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+
+/* ========================================
+   8. AUTH SECTION
+======================================== */
+
+.auth-section {
+    width: min(1080px, calc(100% - 48px));
+    margin: 65px auto 90px;
+
+    display: grid;
+    grid-template-columns: .85fr 1.15fr;
+
+    background: var(--panel);
+    border: 1px solid var(--line);
+
+    box-shadow: 0 25px 80px #0004;
+}
+
+
+/* ========================================
+   9. AUTH ASIDE
+======================================== */
+
+.auth-aside {
+    padding: 55px 45px;
+
+    background: linear-gradient(
+        145deg,
+        #542b3c,
+        #251a2c 72%
+    );
+
+    position: relative;
+    overflow: hidden;
+    min-height: 580px;
+}
+
+.auth-aside:after {
+    content: 'M';
+
+    position: absolute;
+    right: -25px;
+    bottom: -95px;
+
+    font: 300px 'Playfair Display', serif;
+    color: #ffffff08;
+
+    pointer-events: none;
+}
+
+.auth-aside h1 {
+    font-size: 48px;
+    margin: 30px 0 20px;
+}
+
+.auth-aside p {
+    max-width: 300px;
+    color: #c8b9c2;
+    font-size: 14px;
+}
+
+.aside-stamp {
+    position: absolute;
+    bottom: 45px;
+    left: 45px;
+
+    width: 70px;
+    height: 70px;
+
+    border: 1px solid #e6b96b88;
+    color: var(--gold);
+
+    display: grid;
+    place-items: center;
+
+    font: 30px 'Playfair Display', serif;
+    text-align: center;
+}
+
+.aside-stamp small {
+    font: 7px 'DM Sans';
+    letter-spacing: 1px;
+}
+
+
+/* ========================================
+   10. AUTH PANEL
+======================================== */
+
+.auth-panel {
+    padding: 55px 65px;
+    min-width: 0;
+}
+
+.form-heading h2 {
+    font: 600 34px 'Playfair Display', serif;
+    margin: 10px 0 5px;
+}
+
+.form-heading p {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 28px;
+}
+
+
+/* ========================================
+   11. FORM GENERAL
+======================================== */
+
+.form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 17px;
+}
+
+.form-stack label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+
+    color: #dcd4df;
+    font-size: 12px;
+    font-weight: 600;
+
+    min-width: 0;
+}
+
+.form-stack label span {
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 400;
+}
+
+.form-stack input {
+    width: 100%;
+    min-width: 0;
+
+    background: #100d18;
+    border: 1px solid #3b3343;
+    border-radius: 2px;
+
+    padding: 13px 14px;
+
+    color: var(--text);
+    outline: none;
+    font-size: 13px;
+
+    transition: border-color .2s, box-shadow .2s;
+}
+
+.form-stack input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 2px #e6b96b18;
+}
+
+.form-stack input:disabled {
+    color: #8d8492;
+    background: #17131e;
+}
+
+.form-stack input::placeholder {
+    color: #756c7c;
+}
+
+
+/* ========================================
+   12. EMAIL & PHONE - SAME ROW
+======================================== */
+
+.form-two {
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 14px;
+    width: 100%;
+    align-items: start;
+}
+
+.form-two label {
+    min-width: 0;
+}
+
+.form-two input {
+    width: 100%;
+    min-width: 0;
+}
+
+.form-note {
+    margin: -8px 0 0;
+
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+
+/* ========================================
+   13. FORM SWITCH
+======================================== */
+
+.form-switch {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 25px;
+}
+
+.form-switch a,
+.back-link {
+    color: var(--gold);
+}
+
+.form-switch a:hover,
+.back-link:hover {
+    color: var(--gold-light);
+}
+
+
+/* ========================================
+   14. ALERT & NOTIFICATIONS
+======================================== */
+
+.alert {
+    padding: 12px 15px;
+
+    font-size: 12px;
+    margin: 0 0 18px;
+
+    border: 1px solid;
+}
+
+.alert-error {
+    background: #762c3b33;
+    border-color: #a94b5b;
+    color: #ffc4ca;
+}
+
+.alert-success {
+    background: #23604433;
+    border-color: #4c9a73;
+    color: #b8f0ce;
+}
+
+.alert-warning {
+    background: #80602733;
+    border-color: #ae8b49;
+    color: #f4d99e;
+}
+
+.flash-wrap {
+    padding-top: 18px;
+}
+
+
+/* ========================================
+   15. PAGE SECTION
+======================================== */
+
+.page-section {
+    padding-top: 65px;
+    padding-bottom: 90px;
+}
+
+.page-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.page-heading h1 {
+    margin: 8px 0 3px;
+}
+
+.page-heading p {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0;
+}
+
+
+/* ========================================
+   16. PROFILE
+======================================== */
+
+.profile-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 20px;
+}
+
+.profile-side,
+.profile-details,
+.edit-card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 30px;
+}
+
+.profile-side {
+    text-align: center;
+}
+
+.avatar {
+    width: 76px;
+    height: 76px;
+
+    border-radius: 50%;
+
+    display: grid;
+    place-items: center;
+
+    margin: 0 auto 16px;
+
+    background: linear-gradient(135deg, #d49a66, #762f4a);
+
+    font: 34px 'Playfair Display', serif;
+    color: #fff;
+}
+
+.profile-side h2 {
+    font: 600 21px 'Playfair Display', serif;
+    margin: 0 0 4px;
+}
+
+.profile-side > p {
+    color: var(--muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+
+    color: #a9d9b9;
+    font-size: 10px;
+
+    margin: 12px 0 24px;
+}
+
+.status-pill i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #6ec58d;
+}
+
+.profile-side form {
+    margin-top: 10px;
+}
+
+
+/* ========================================
+   17. PROFILE DETAILS
+======================================== */
+
+.detail-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    border-bottom: 1px solid var(--line);
+
+    padding-bottom: 18px;
+    margin-bottom: 5px;
+}
+
+.detail-heading h2 {
+    font: 600 22px 'Playfair Display', serif;
+    margin: 0;
+}
+
+.detail-heading span {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--gold);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+
+    padding: 18px 0;
+
+    border-bottom: 1px solid var(--line);
+    font-size: 13px;
+}
+
+.detail-row span {
+    color: var(--muted);
+}
+
+.detail-row strong {
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+.notice {
+    margin-top: 22px;
+    padding: 13px;
+
+    background: #e6b96b12;
+    border-left: 2px solid var(--gold);
+
+    color: #c7bca9;
+    font-size: 11px;
+}
+
+
+/* ========================================
+   18. EDIT PROFILE
+======================================== */
+
+.narrow-page {
+    max-width: 760px;
+}
+
+.back-link {
+    font-size: 12px;
+    display: inline-block;
+    margin-bottom: 28px;
+}
+
+.edit-card {
+    margin-top: 25px;
+}
+
+.field-help {
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+
+/* ========================================
+   19. FOOTER
+======================================== */
+
+.site-footer {
+    border-top: 1px solid var(--line);
+    background: #0c0a12;
+}
+
+.footer-inner {
+    min-height: 145px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 20px;
+}
+
+.footer-inner p,
+.footer-inner small {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+
+/* ========================================
+   20. TABLET RESPONSIVE
+======================================== */
+
+@media (max-width: 850px) {
+
+    .hero-art {
+        right: -100px;
+        opacity: .45;
+    }
+
+    .hero-content {
+        z-index: 2;
+    }
+
+    .auth-section {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-aside {
+        min-height: 300px;
+        padding: 35px;
+    }
+
+    .auth-aside h1 {
+        font-size: 40px;
+    }
+
+    .aside-stamp {
+        display: none;
+    }
+
+    .auth-panel {
+        padding: 40px;
+    }
+
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-side {
+        max-width: none;
+    }
+
+    .footer-inner {
+        flex-wrap: wrap;
+        padding: 25px 0;
+    }
+}
+
+
+/* ========================================
+   21. MOBILE RESPONSIVE
+======================================== */
+
+@media (max-width: 600px) {
+
+    .container {
+        width: min(100% - 32px, var(--max));
+    }
+
+    .site-header {
+        height: 70px;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+
+        position: absolute;
+        top: 70px;
+        left: 0;
+        right: 0;
+
+        padding: 20px;
+
+        background: #17121f;
+        border-bottom: 1px solid var(--line);
+
+        flex-direction: column;
+        align-items: stretch;
+        gap: 15px;
+    }
+
+    .nav-links.open {
+        display: flex;
+    }
+
+    .nav-links a,
+    .nav-links button {
+        text-align: center;
+    }
+
+    /* Hero */
+    .hero {
+        min-height: 560px;
+    }
+
+    .hero-content {
+        padding-top: 75px;
+    }
+
+    .hero h1 {
+        font-size: 51px;
+    }
+
+    .hero-art {
+        transform: scale(.75);
+        transform-origin: top right;
+
+        right: -120px;
+        top: 180px;
+        opacity: .25;
+    }
+
+    .hero-content > p {
+        max-width: 95%;
+    }
+
+    .hero-meta {
+        margin-top: 38px;
+    }
+
+    /* Intro */
+    .intro-section {
+        padding: 60px 0;
+    }
+
+    .feature-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Auth */
+    .auth-section {
+        width: calc(100% - 24px);
+        margin: 25px auto 55px;
+    }
+
+    .auth-aside {
+        min-height: 260px;
+        padding: 28px;
+    }
+
+    .auth-aside h1 {
+        font-size: 35px;
+        margin: 20px 0 10px;
+    }
+
+    .auth-panel {
+        padding: 30px 22px;
+    }
+
+    /* Keep email and phone on the same row */
+    .form-two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .form-two input {
+        padding: 11px 8px;
+        font-size: 11px;
+    }
+
+    .form-two label {
+        font-size: 11px;
+    }
+
+    .form-two label span {
+        font-size: 9px;
+    }
+
+    .form-note {
+        font-size: 10px;
+    }
+
+    /* Page */
+    .page-section {
+        padding-top: 40px;
+    }
+
+    .page-heading {
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .profile-side,
+    .profile-details,
+    .edit-card {
+        padding: 22px 18px;
+    }
+
+    .detail-heading span {
+        display: none;
+    }
+
+    .detail-row {
+        font-size: 12px;
+    }
+
+    /* Footer */
+    .footer-inner {
+        display: block;
+        padding: 25px 0;
+    }
+
+    .footer-inner p {
+        margin: 15px 0 5px;
+    }
+}
+
+
+/* ========================================
+   22. VERY SMALL MOBILE
+======================================== */
+
+@media (max-width: 360px) {
+
+    .auth-panel {
+        padding: 25px 14px;
+    }
+
+    .form-two {
+        gap: 6px;
+    }
+
+    .form-two input {
+        padding: 10px 6px;
+        font-size: 10px;
+    }
+
+    .form-two label {
+        font-size: 10px;
+    }
+
+    .form-two label span {
+        font-size: 8px;
+    }
+
+    .form-note {
+        font-size: 9px;
+    }
+}
