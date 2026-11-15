@@ -1,0 +1,9 @@
+# Bỏ qua file rác của hệ điều hành
+.DS_Store
+Thumbs.db
+
+# Bỏ qua cấu hình cá nhân của VS Code
+.vscode/
+
+# Bỏ qua file cấu hình database nếu máy mỗi người đặt pass khác nhau (tùy chọn)
+# config/database.php
