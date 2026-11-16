@@ -1,0 +1,12 @@
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>MiniShop</title>
+</head>
+<body>
+    <h1><?php echo "MiniShop"; ?></h1>
+</body>
+</html>
+
