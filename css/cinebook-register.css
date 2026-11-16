@@ -1,0 +1,94 @@
+/* CINEBOOK REGISTER - BLUE THEME */
+
+body.cinebook-register {
+    background: #0b1120;
+    color: #e8eef8;
+}
+
+/* Khung dang ky */
+body.cinebook-register .cine-register,
+body.cinebook-register .cine-register-wrap {
+    border-color: #293c55;
+}
+
+/* Cot gioi thieu */
+body.cinebook-register .cine-register-aside,
+body.cinebook-register .cine-register-left {
+    background: linear-gradient(145deg, #17385c, #102037 75%);
+}
+
+/* Mau nhan */
+body.cinebook-register .cine-register em,
+body.cinebook-register .cine-register strong,
+body.cinebook-register .cine-register .cine-kicker {
+    color: #7dd3fc;
+}
+
+/* Form */
+body.cinebook-register .cine-register-panel,
+body.cinebook-register .cine-register-right {
+    background: #151e30;
+}
+
+/* O nhap */
+body.cinebook-register .cine-input-wrap {
+    background: #0e1728;
+    border: 1px solid #34455e;
+    border-radius: 10px;
+}
+
+body.cinebook-register .cine-input {
+    background: transparent;
+    color: #ffffff;
+}
+
+body.cinebook-register .cine-input::placeholder {
+    color: #8da0ba;
+}
+
+body.cinebook-register .cine-input-wrap:focus-within {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56,189,248,.12);
+}
+
+/* Icon */
+body.cinebook-register .cine-input-icon,
+body.cinebook-register .cine-toggle-pass {
+    color: #7dd3fc;
+}
+
+/* Quy tac mat khau */
+body.cinebook-register .cine-password-rules {
+    background: #101d30;
+    border: 1px solid #34455e;
+    border-radius: 12px;
+}
+
+body.cinebook-register .cine-rule.valid {
+    color: #86efac;
+}
+
+/* Nut dang ky */
+body.cinebook-register .cine-submit {
+    background: #238be1;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    box-shadow: none;
+}
+
+body.cinebook-register .cine-submit:hover {
+    background: #1478c7;
+}
+
+/* Link */
+body.cinebook-register .cine-login-link a {
+    color: #7dd3fc;
+}
+
+/* Tuong thich dien thoai */
+@media (max-width: 850px) {
+    body.cinebook-register .cine-password-grid {
+        grid-template-columns: 1fr;
+    }
+}

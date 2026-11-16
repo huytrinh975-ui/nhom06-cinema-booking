@@ -1,0 +1,211 @@
+/* CINEBOOK - LOGIN PAGE */
+
+body.cinebook-login {
+    background: #0b1120;
+    color: #e8eef8;
+}
+
+body.cinebook-login .auth-section {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    width: min(1120px, calc(100% - 40px));
+    min-height: 560px;
+    margin: 64px auto 80px;
+    border: 1px solid #26354b;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #151e30;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, .2);
+}
+
+body.cinebook-login .auth-aside {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 52px 44px;
+    background: linear-gradient(145deg, #17385c, #102037 70%);
+}
+
+body.cinebook-login .aside-label,
+body.cinebook-login .section-kicker {
+    color: #7dd3fc;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 2.5px;
+}
+
+body.cinebook-login .auth-aside h1 {
+    margin: 30px 0 20px;
+    color: #fff;
+    font-size: clamp(34px, 4vw, 52px);
+    line-height: 1.15;
+    letter-spacing: -1px;
+}
+
+body.cinebook-login .auth-aside h1 em {
+    color: #7dd3fc;
+    font-style: normal;
+}
+
+body.cinebook-login .auth-aside > p {
+    max-width: 320px;
+    color: #c0d0e4;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+body.cinebook-login .aside-stamp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    width: 72px;
+    height: 72px;
+    margin-top: auto;
+    border: 1px solid #4d7095;
+    border-radius: 14px;
+    color: #7dd3fc;
+    font-size: 26px;
+    font-weight: 800;
+}
+
+body.cinebook-login .aside-stamp small {
+    font-size: 9px;
+    letter-spacing: 1px;
+}
+
+body.cinebook-login .auth-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: 52px 58px;
+    background: #151e30;
+}
+
+body.cinebook-login .form-heading {
+    margin-bottom: 30px;
+}
+
+body.cinebook-login .form-heading h2 {
+    margin: 14px 0 8px;
+    color: #fff;
+    font-size: clamp(28px, 3vw, 38px);
+    line-height: 1.2;
+}
+
+body.cinebook-login .form-heading p {
+    margin: 0;
+    color: #a9bad1;
+    font-size: 14px;
+}
+
+body.cinebook-login .form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+body.cinebook-login .form-stack label {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    color: #dce7f6;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+body.cinebook-login .form-stack input:not([type="hidden"]) {
+    display: block;
+    width: 100%;
+    min-height: 50px;
+    padding: 12px 15px;
+    border: 1px solid #34455e;
+    border-radius: 10px;
+    background: #0e1728;
+    color: #fff;
+    font: inherit;
+    box-sizing: border-box;
+    outline: none;
+}
+
+body.cinebook-login .form-stack input::placeholder {
+    color: #778ba7;
+}
+
+body.cinebook-login .form-stack input:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, .12);
+}
+
+body.cinebook-login .form-stack .btn-primary {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 50px;
+    border: 0;
+    border-radius: 10px;
+    background: #238be1;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+body.cinebook-login .form-stack .btn-primary:hover {
+    background: #1478c7;
+}
+
+body.cinebook-login .form-switch {
+    margin-top: 24px;
+    color: #a9bad1;
+    font-size: 13px;
+}
+
+body.cinebook-login .form-switch a {
+    color: #7dd3fc;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+body.cinebook-login .alert-error {
+    margin-bottom: 20px;
+    padding: 14px;
+    border: 1px solid #7f3541;
+    border-radius: 10px;
+    background: #3b1d2b;
+    color: #fecdd3;
+}
+
+@media (max-width: 850px) {
+    body.cinebook-login .auth-section {
+        grid-template-columns: 1fr;
+        margin: 28px auto 50px;
+    }
+
+    body.cinebook-login .auth-aside {
+        padding: 32px;
+    }
+
+    body.cinebook-login .aside-stamp {
+        display: none;
+    }
+
+    body.cinebook-login .auth-panel {
+        padding: 36px 32px;
+    }
+}
+
+@media (max-width: 500px) {
+    body.cinebook-login .auth-section {
+        width: calc(100% - 24px);
+        border-radius: 14px;
+    }
+
+    body.cinebook-login .auth-aside,
+    body.cinebook-login .auth-panel {
+        padding: 26px 20px;
+    }
+}
