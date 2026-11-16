@@ -438,6 +438,11 @@ $page_title = $page_title ?? 'Hệ Thống Quản Trị';
             <i class="fa-solid fa-users"></i>
             <span>Tài Khoản Khách Hàng</span>
         </a>
+        <div class="nav-label">Dịch vụ khách hàng</div>
+<a href="../customer/payment/index.php" class="nav-link">
+    <i class="fa-solid fa-credit-card" aria-hidden="true"></i>
+    <span>Thanh toán vé</span>
+</a>
     </div>
 
     <div class="sidebar-footer">

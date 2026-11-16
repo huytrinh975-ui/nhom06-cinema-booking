@@ -15,6 +15,7 @@ function cbp_header(string $title, ?array $customer, string $active = ''): void
         <?php if ($customer): ?><div class="account"><span class="account-icon" aria-hidden="true">KH</span><span><?= cbp_e($customer['fullname']) ?></span><form method="post" action="logout.php"><?php cbp_csrf_field(); ?><button class="text-button" type="submit">Thoát</button></form></div><?php endif; ?>
     </div>
     <nav class="container nav" aria-label="Điều hướng tài khoản">
+        <a href="../../index.php">Về website</a>
         <?php foreach (['checkout.php'=>['orders','Đơn hàng'], 'tickets.php'=>['tickets','Vé của tôi'], 'history.php'=>['history','Lịch sử'], 'policy.php'=>['policy','Quy định hủy']] as $href=>$item): ?>
             <a href="<?= cbp_e($href) ?>" <?= $active === $item[0] ? 'aria-current="page"' : '' ?>><?= cbp_e($item[1]) ?></a>
         <?php endforeach; ?>
