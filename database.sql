@@ -6,22 +6,14 @@
 CREATE DATABASE IF NOT EXISTS `cinema_booking_db` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE `cinema_booking_db`;
 
-SET FOREIGN_KEY_CHECKS = 0;
-DROP TABLE IF EXISTS `booking_details`;
-DROP TABLE IF EXISTS `bookings`;
-DROP TABLE IF EXISTS `showtimes`;
-DROP TABLE IF EXISTS `seats`;
-DROP TABLE IF EXISTS `rooms`;
-DROP TABLE IF EXISTS `cinemas`;
-DROP TABLE IF EXISTS `movie_genres`;
-DROP TABLE IF EXISTS `genres`;
-DROP TABLE IF EXISTS `vouchers`;
-DROP TABLE IF EXISTS `movies`;
-DROP TABLE IF EXISTS `users`;
-SET FOREIGN_KEY_CHECKS = 1;
+-- Chỉ nạp dữ liệu mẫu khi schema chưa có bảng nào.
+SET @cinema_seed_demo = NOT EXISTS (
+    SELECT 1 FROM information_schema.TABLES
+    WHERE TABLE_SCHEMA = DATABASE()
+);
 
 -- 1. Bảng users (Người dùng và Quản trị viên)
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `fullname` VARCHAR(100) NOT NULL,
     `email` VARCHAR(100) NOT NULL UNIQUE,
@@ -33,7 +25,7 @@ CREATE TABLE `users` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 2. Bảng movies (Danh sách phim)
-CREATE TABLE `movies` (
+CREATE TABLE IF NOT EXISTS `movies` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `title` VARCHAR(255) NOT NULL,
     `description` TEXT DEFAULT NULL,
@@ -70,7 +62,7 @@ CREATE TABLE IF NOT EXISTS vouchers (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 3. Bảng cinemas (Cụm rạp chiếu phim)
-CREATE TABLE `cinemas` (
+CREATE TABLE IF NOT EXISTS `cinemas` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(150) NOT NULL,
     `address` VARCHAR(255) NOT NULL,
@@ -79,7 +71,7 @@ CREATE TABLE `cinemas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 4. Bảng rooms (Phòng chiếu)
-CREATE TABLE `rooms` (
+CREATE TABLE IF NOT EXISTS `rooms` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `cinema_id` INT NOT NULL,
     `name` VARCHAR(50) NOT NULL,
@@ -89,7 +81,7 @@ CREATE TABLE `rooms` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 5. Bảng seats (Ghế ngồi trong phòng)
-CREATE TABLE `seats` (
+CREATE TABLE IF NOT EXISTS `seats` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `room_id` INT NOT NULL,
     `seat_number` VARCHAR(10) NOT NULL,
@@ -100,7 +92,7 @@ CREATE TABLE `seats` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 6. Bảng showtimes (Suất chiếu)
-CREATE TABLE `showtimes` (
+CREATE TABLE IF NOT EXISTS `showtimes` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `movie_id` INT NOT NULL,
     `room_id` INT NOT NULL,
@@ -114,7 +106,7 @@ CREATE TABLE `showtimes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 7. Bảng bookings (Đơn đặt vé)
-CREATE TABLE `bookings` (
+CREATE TABLE IF NOT EXISTS `bookings` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `booking_code` VARCHAR(20) UNIQUE NOT NULL,
     `user_id` INT NOT NULL,
@@ -128,7 +120,7 @@ CREATE TABLE `bookings` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 8. Bảng booking_details (Chi tiết ghế đã đặt trong đơn)
-CREATE TABLE `booking_details` (
+CREATE TABLE IF NOT EXISTS `booking_details` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `booking_id` INT NOT NULL,
     `seat_id` INT NOT NULL,
@@ -141,98 +133,392 @@ CREATE TABLE `booking_details` (
 -- DỮ LIỆU MẪU (SEED DATA)
 -- ============================================================
 
+START TRANSACTION;
+
 -- Dữ liệu users (Mật khẩu admin: admin123, Khách: 123456)
-INSERT INTO `users` (`id`, `fullname`, `email`, `phone`, `password`, `role`, `status`, `created_at`) VALUES
-(1, 'Trịnh Minh Huy', 'trinhminhhuy@gmail.com', '0901234567', '$2y$10$rmbl/JymRF4t6/CjrXY/FO6pJTs11rsZ/BfO.tdeWvLEIWmHdyBt.', 'admin', 'active', NOW()),
-(2, 'Trần Văn Khách', 'khachhang@gmail.com', '0912345678', '$2y$10$0T5AiprK0yfE.xy8xTjUl.52EQvrkI.OfNngVu28bCnb0vMq50Mpm', 'customer', 'active', NOW()),
-(3, 'Lê Thị Thu Thảo', 'thuthao@gmail.com', '0987654321', '$2y$10$0T5AiprK0yfE.xy8xTjUl.52EQvrkI.OfNngVu28bCnb0vMq50Mpm', 'customer', 'active', NOW()),
-(4, 'Phạm Hoàng Long', 'hoanglong@gmail.com', '0933445566', '$2y$10$0T5AiprK0yfE.xy8xTjUl.52EQvrkI.OfNngVu28bCnb0vMq50Mpm', 'customer', 'locked', NOW());
+INSERT INTO `users` (`id`, `fullname`, `email`, `phone`, `password`, `role`, `status`, `created_at`)
+SELECT 1, 'Trịnh Minh Huy', 'trinhminhhuy@gmail.com', '0901234567', '$2y$10$rmbl/JymRF4t6/CjrXY/FO6pJTs11rsZ/BfO.tdeWvLEIWmHdyBt.', 'admin', 'active', NOW()
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 'Trần Văn Khách', 'khachhang@gmail.com', '0912345678', '$2y$10$0T5AiprK0yfE.xy8xTjUl.52EQvrkI.OfNngVu28bCnb0vMq50Mpm', 'customer', 'active', NOW()
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 'Lê Thị Thu Thảo', 'thuthao@gmail.com', '0987654321', '$2y$10$0T5AiprK0yfE.xy8xTjUl.52EQvrkI.OfNngVu28bCnb0vMq50Mpm', 'customer', 'active', NOW()
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 'Phạm Hoàng Long', 'hoanglong@gmail.com', '0933445566', '$2y$10$0T5AiprK0yfE.xy8xTjUl.52EQvrkI.OfNngVu28bCnb0vMq50Mpm', 'customer', 'locked', NOW()
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu movies
-INSERT INTO `movies` (`id`, `title`, `description`, `duration`, `release_date`, `poster`, `trailer_url`, `status`) VALUES
-(1, 'Dune: Hành Tinh Cát - Phần Hai', 'Paul Atreides hợp lực cùng Chani và tộc người Fremen để trả thù những kẻ đã hủy diệt gia tộc anh, đồng thời đối mặt với lựa chọn giữa tình yêu và số phận vũ trụ.', 166, '2024-03-01', 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg', 'https://www.youtube.com/watch?v=Way9Dexny3w', 'showing'),
-(2, 'Mai', 'Mai là một người phụ nữ làm nghề massage, mang trong mình vết thương lòng trong quá khứ và khao khát được đón nhận hạnh phúc mới bên chàng nhạc công trẻ Dương.', 131, '2024-02-10', 'https://image.tmdb.org/t/p/w500/b1NxA3297i9lA2E8s4T7fNl6o0v.jpg', 'https://www.youtube.com/watch?v=dYk8q9gJj0k', 'showing'),
-(3, 'Godzilla x Kong: Đế Chế Mới', 'Hai quái thú huyền thoại Godzilla và Kong buộc phải liên minh để đối đầu với một mối đe dọa tiềm ẩn khổng lồ đe dọa sự tồn vong của Trái Đất bên dưới lòng đất.', 115, '2024-03-29', 'https://image.tmdb.org/t/p/w500/bQ2ywkchCe026rmbtEMa59fy7R7.jpg', 'https://www.youtube.com/watch?v=lV1OOlGwExg', 'showing'),
-(4, 'Kung Fu Panda 4', 'Po được chọn trở thành Thủ lĩnh Tinh thần của Thung lũng Bình Yên và phải tìm kiếm một Chiến binh Rồng mới, đồng thời chống lại mụ Phù thủy Tắc kè hoa xảo quyệt.', 94, '2024-03-08', 'https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg', 'https://www.youtube.com/watch?v=_inKs4eeHiI', 'showing'),
-(5, 'Lật Mặt 7: Một Điều Ước', 'Bộ phim về tình mẫu tử thiêng liêng xoay quanh câu chuyện gia đình bà Hai và 5 người con, mang thông điệp chữa lành sâu sắc cho mọi thế hệ người xem.', 138, '2024-04-26', 'https://image.tmdb.org/t/p/w500/1Xdd3ej0759f2pP79M7Lg5z1u4G.jpg', 'https://www.youtube.com/watch?v=sS_wXWc7cKk', 'upcoming'),
-(6, 'Kẻ Trộm Mặt Trăng 4', 'Gru và gia đình bước vào một chương mới đầy phiêu lưu với sự chào đời của Gru Jr. và sự xuất hiện của kẻ thù truyền kiếp Maxime Le Mal.', 95, '2024-07-03', 'https://image.tmdb.org/t/p/w500/wWba3TaojhK7NdycRhoQpsG0cnH.jpg', 'https://www.youtube.com/watch?v=LtNYaH61dXY', 'upcoming');
+INSERT INTO `movies` (`id`, `title`, `description`, `duration`, `release_date`, `poster`, `trailer_url`, `status`)
+SELECT 1, 'Dune: Hành Tinh Cát - Phần Hai', 'Paul Atreides hợp lực cùng Chani và tộc người Fremen để trả thù những kẻ đã hủy diệt gia tộc anh, đồng thời đối mặt với lựa chọn giữa tình yêu và số phận vũ trụ.', 166, '2024-03-01', 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nxl1X.jpg', 'https://www.youtube.com/watch?v=Way9Dexny3w', 'showing'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 'Mai', 'Mai là một người phụ nữ làm nghề massage, mang trong mình vết thương lòng trong quá khứ và khao khát được đón nhận hạnh phúc mới bên chàng nhạc công trẻ Dương.', 131, '2024-02-10', 'https://image.tmdb.org/t/p/w500/b1NxA3297i9lA2E8s4T7fNl6o0v.jpg', 'https://www.youtube.com/watch?v=dYk8q9gJj0k', 'showing'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 'Godzilla x Kong: Đế Chế Mới', 'Hai quái thú huyền thoại Godzilla và Kong buộc phải liên minh để đối đầu với một mối đe dọa tiềm ẩn khổng lồ đe dọa sự tồn vong của Trái Đất bên dưới lòng đất.', 115, '2024-03-29', 'https://image.tmdb.org/t/p/w500/bQ2ywkchCe026rmbtEMa59fy7R7.jpg', 'https://www.youtube.com/watch?v=lV1OOlGwExg', 'showing'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 'Kung Fu Panda 4', 'Po được chọn trở thành Thủ lĩnh Tinh thần của Thung lũng Bình Yên và phải tìm kiếm một Chiến binh Rồng mới, đồng thời chống lại mụ Phù thủy Tắc kè hoa xảo quyệt.', 94, '2024-03-08', 'https://image.tmdb.org/t/p/w500/kDp1vUBnMpe8ak4rjgl3cLELqjU.jpg', 'https://www.youtube.com/watch?v=_inKs4eeHiI', 'showing'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 5, 'Lật Mặt 7: Một Điều Ước', 'Bộ phim về tình mẫu tử thiêng liêng xoay quanh câu chuyện gia đình bà Hai và 5 người con, mang thông điệp chữa lành sâu sắc cho mọi thế hệ người xem.', 138, '2024-04-26', 'https://image.tmdb.org/t/p/w500/1Xdd3ej0759f2pP79M7Lg5z1u4G.jpg', 'https://www.youtube.com/watch?v=sS_wXWc7cKk', 'upcoming'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 6, 'Kẻ Trộm Mặt Trăng 4', 'Gru và gia đình bước vào một chương mới đầy phiêu lưu với sự chào đời của Gru Jr. và sự xuất hiện của kẻ thù truyền kiếp Maxime Le Mal.', 95, '2024-07-03', 'https://image.tmdb.org/t/p/w500/wWba3TaojhK7NdycRhoQpsG0cnH.jpg', 'https://www.youtube.com/watch?v=LtNYaH61dXY', 'upcoming'
+WHERE @cinema_seed_demo;
 
-INSERT INTO genres (id, name) VALUES
-(1, 'Hành động'), (2, 'Khoa học viễn tưởng'), (3, 'Tâm lý'),
-(4, 'Tình cảm'), (5, 'Hoạt hình'), (6, 'Hài'), (7, 'Gia đình');
+INSERT INTO genres (id, name)
+SELECT 1, 'Hành động'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 'Khoa học viễn tưởng'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 'Tâm lý'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 'Tình cảm'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 5, 'Hoạt hình'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 6, 'Hài'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 7, 'Gia đình'
+WHERE @cinema_seed_demo;
 
-INSERT INTO movie_genres (movie_id, genre_id) VALUES
-(1, 1), (1, 2), (2, 3), (2, 4), (3, 1), (3, 2), (4, 1), (4, 5), (4, 6), (5, 7), (6, 5), (6, 6);
+INSERT INTO movie_genres (movie_id, genre_id)
+SELECT 1, 1
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 1, 2
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 3
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 4
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 1
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 2
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 1
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 5
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 6
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 5, 7
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 6, 5
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 6, 6
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu cinemas
-INSERT INTO `cinemas` (`id`, `name`, `address`, `city`) VALUES
-(1, 'CGV Landmark 81', 'Tầng B1, TTTM Vincom Center Landmark 81, 720A Điện Biên Phủ, P.22, Bình Thạnh', 'Hồ Chí Minh'),
-(2, 'BHD Star Cineplex 3/2', 'Lầu 5, Siêu Thị Vincom 3/2, 3C Đường 3 Tháng 2, Phường 11, Quận 10', 'Hồ Chí Minh'),
-(3, 'Beta Cinemas Mỹ Đình', 'Tầng hầm B1, Tòa nhà Golden Palace, Mễ Trì, Nam Từ Liêm', 'Hà Nội');
+INSERT INTO `cinemas` (`id`, `name`, `address`, `city`)
+SELECT 1, 'CGV Landmark 81', 'Tầng B1, TTTM Vincom Center Landmark 81, 720A Điện Biên Phủ, P.22, Bình Thạnh', 'Hồ Chí Minh'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 'BHD Star Cineplex 3/2', 'Lầu 5, Siêu Thị Vincom 3/2, 3C Đường 3 Tháng 2, Phường 11, Quận 10', 'Hồ Chí Minh'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 'Beta Cinemas Mỹ Đình', 'Tầng hầm B1, Tòa nhà Golden Palace, Mễ Trì, Nam Từ Liêm', 'Hà Nội'
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu rooms
-INSERT INTO `rooms` (`id`, `cinema_id`, `name`, `total_seats`) VALUES
-(1, 1, 'Phòng 01 (IMAX Laser)', 28),
-(2, 1, 'Phòng 02 (Standard)', 28),
-(3, 2, 'Phòng chiếu Cinema 01', 28),
-(4, 3, 'Phòng chiếu Beta 01', 28);
+INSERT INTO `rooms` (`id`, `cinema_id`, `name`, `total_seats`)
+SELECT 1, 1, 'Phòng 01 (IMAX Laser)', 28
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 1, 'Phòng 02 (Standard)', 28
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 2, 'Phòng chiếu Cinema 01', 28
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 3, 'Phòng chiếu Beta 01', 28
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu seats cho Phòng 1 (28 ghế: Hàng A, B standard; C VIP; D Couple)
-INSERT INTO `seats` (`room_id`, `seat_number`, `seat_type`, `price_multiplier`) VALUES
-(1, 'A1', 'standard', 1.00), (1, 'A2', 'standard', 1.00), (1, 'A3', 'standard', 1.00), (1, 'A4', 'standard', 1.00), (1, 'A5', 'standard', 1.00), (1, 'A6', 'standard', 1.00), (1, 'A7', 'standard', 1.00), (1, 'A8', 'standard', 1.00),
-(1, 'B1', 'standard', 1.00), (1, 'B2', 'standard', 1.00), (1, 'B3', 'standard', 1.00), (1, 'B4', 'standard', 1.00), (1, 'B5', 'standard', 1.00), (1, 'B6', 'standard', 1.00), (1, 'B7', 'standard', 1.00), (1, 'B8', 'standard', 1.00),
-(1, 'C1', 'vip', 1.25), (1, 'C2', 'vip', 1.25), (1, 'C3', 'vip', 1.25), (1, 'C4', 'vip', 1.25), (1, 'C5', 'vip', 1.25), (1, 'C6', 'vip', 1.25), (1, 'C7', 'vip', 1.25), (1, 'C8', 'vip', 1.25),
-(1, 'D1-D2', 'couple', 1.80), (1, 'D3-D4', 'couple', 1.80), (1, 'D5-D6', 'couple', 1.80), (1, 'D7-D8', 'couple', 1.80);
+INSERT INTO `seats` (id, `room_id`, `seat_number`, `seat_type`, `price_multiplier`)
+SELECT 1, 1, 'A1', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 1, 'A2', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 1, 'A3', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 1, 'A4', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 5, 1, 'A5', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 6, 1, 'A6', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 7, 1, 'A7', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 8, 1, 'A8', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 9, 1, 'B1', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 10, 1, 'B2', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 11, 1, 'B3', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 12, 1, 'B4', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 13, 1, 'B5', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 14, 1, 'B6', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 15, 1, 'B7', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 16, 1, 'B8', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 17, 1, 'C1', 'vip', 1.25
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 18, 1, 'C2', 'vip', 1.25
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 19, 1, 'C3', 'vip', 1.25
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 20, 1, 'C4', 'vip', 1.25
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 21, 1, 'C5', 'vip', 1.25
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 22, 1, 'C6', 'vip', 1.25
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 23, 1, 'C7', 'vip', 1.25
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 24, 1, 'C8', 'vip', 1.25
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 25, 1, 'D1-D2', 'couple', 1.80
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 26, 1, 'D3-D4', 'couple', 1.80
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 27, 1, 'D5-D6', 'couple', 1.80
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 28, 1, 'D7-D8', 'couple', 1.80
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu seats cho Phòng 2 (28 ghế)
-INSERT INTO `seats` (`room_id`, `seat_number`, `seat_type`, `price_multiplier`) VALUES
-(2, 'A1', 'standard', 1.00), (2, 'A2', 'standard', 1.00), (2, 'A3', 'standard', 1.00), (2, 'A4', 'standard', 1.00), (2, 'A5', 'standard', 1.00), (2, 'A6', 'standard', 1.00), (2, 'A7', 'standard', 1.00), (2, 'A8', 'standard', 1.00),
-(2, 'B1', 'standard', 1.00), (2, 'B2', 'standard', 1.00), (2, 'B3', 'standard', 1.00), (2, 'B4', 'standard', 1.00), (2, 'B5', 'standard', 1.00), (2, 'B6', 'standard', 1.00), (2, 'B7', 'standard', 1.00), (2, 'B8', 'standard', 1.00),
-(2, 'C1', 'vip', 1.20), (2, 'C2', 'vip', 1.20), (2, 'C3', 'vip', 1.20), (2, 'C4', 'vip', 1.20), (2, 'C5', 'vip', 1.20), (2, 'C6', 'vip', 1.20), (2, 'C7', 'vip', 1.20), (2, 'C8', 'vip', 1.20),
-(2, 'D1-D2', 'couple', 1.75), (2, 'D3-D4', 'couple', 1.75), (2, 'D5-D6', 'couple', 1.75), (2, 'D7-D8', 'couple', 1.75);
+INSERT INTO `seats` (id, `room_id`, `seat_number`, `seat_type`, `price_multiplier`)
+SELECT 29, 2, 'A1', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 30, 2, 'A2', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 31, 2, 'A3', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 32, 2, 'A4', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 33, 2, 'A5', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 34, 2, 'A6', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 35, 2, 'A7', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 36, 2, 'A8', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 37, 2, 'B1', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 38, 2, 'B2', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 39, 2, 'B3', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 40, 2, 'B4', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 41, 2, 'B5', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 42, 2, 'B6', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 43, 2, 'B7', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 44, 2, 'B8', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 45, 2, 'C1', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 46, 2, 'C2', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 47, 2, 'C3', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 48, 2, 'C4', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 49, 2, 'C5', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 50, 2, 'C6', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 51, 2, 'C7', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 52, 2, 'C8', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 53, 2, 'D1-D2', 'couple', 1.75
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 54, 2, 'D3-D4', 'couple', 1.75
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 55, 2, 'D5-D6', 'couple', 1.75
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 56, 2, 'D7-D8', 'couple', 1.75
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu seats cho Phòng 3
-INSERT INTO `seats` (`room_id`, `seat_number`, `seat_type`, `price_multiplier`) VALUES
-(3, 'A1', 'standard', 1.00), (3, 'A2', 'standard', 1.00), (3, 'A3', 'standard', 1.00), (3, 'A4', 'standard', 1.00),
-(3, 'B1', 'standard', 1.00), (3, 'B2', 'standard', 1.00), (3, 'B3', 'vip', 1.20), (3, 'B4', 'vip', 1.20);
+INSERT INTO `seats` (id, `room_id`, `seat_number`, `seat_type`, `price_multiplier`)
+SELECT 57, 3, 'A1', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 58, 3, 'A2', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 59, 3, 'A3', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 60, 3, 'A4', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 61, 3, 'B1', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 62, 3, 'B2', 'standard', 1.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 63, 3, 'B3', 'vip', 1.20
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 64, 3, 'B4', 'vip', 1.20
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu showtimes (Suất chiếu)
-INSERT INTO `showtimes` (`id`, `movie_id`, `room_id`, `start_time`, `end_time`, `base_price`, `status`) VALUES
-(1, 1, 1, DATE_ADD(CURRENT_DATE, INTERVAL '09:00:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '11:46:00' HOUR_SECOND), 90000.00, 'active'),
-(2, 1, 1, DATE_ADD(CURRENT_DATE, INTERVAL '14:30:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '17:16:00' HOUR_SECOND), 110000.00, 'active'),
-(3, 2, 2, DATE_ADD(CURRENT_DATE, INTERVAL '10:00:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '12:11:00' HOUR_SECOND), 80000.00, 'active'),
-(4, 3, 1, DATE_ADD(CURRENT_DATE, INTERVAL '19:00:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '20:55:00' HOUR_SECOND), 105000.00, 'active'),
-(5, 4, 3, DATE_ADD(CURRENT_DATE, INTERVAL '15:00:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '16:34:00' HOUR_SECOND), 75000.00, 'active');
+INSERT INTO `showtimes` (`id`, `movie_id`, `room_id`, `start_time`, `end_time`, `base_price`, `status`)
+SELECT 1, 1, 1, DATE_ADD(CURRENT_DATE, INTERVAL '09:00:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '11:46:00' HOUR_SECOND), 90000.00, 'active'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 1, 1, DATE_ADD(CURRENT_DATE, INTERVAL '14:30:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '17:16:00' HOUR_SECOND), 110000.00, 'active'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 2, 2, DATE_ADD(CURRENT_DATE, INTERVAL '10:00:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '12:11:00' HOUR_SECOND), 80000.00, 'active'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 3, 1, DATE_ADD(CURRENT_DATE, INTERVAL '19:00:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '20:55:00' HOUR_SECOND), 105000.00, 'active'
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 5, 4, 3, DATE_ADD(CURRENT_DATE, INTERVAL '15:00:00' HOUR_SECOND), DATE_ADD(CURRENT_DATE, INTERVAL '16:34:00' HOUR_SECOND), 75000.00, 'active'
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu bookings (Đơn đặt vé)
-INSERT INTO `bookings` (`id`, `booking_code`, `user_id`, `showtime_id`, `total_amount`, `payment_status`, `booking_status`, `created_at`) VALUES
-(1, 'BK2024040101', 2, 1, 180000.00, 'paid', 'confirmed', DATE_SUB(NOW(), INTERVAL 2 HOUR)),
-(2, 'BK2024040102', 3, 1, 225000.00, 'paid', 'confirmed', DATE_SUB(NOW(), INTERVAL 1 HOUR)),
-(3, 'BK2024040103', 2, 2, 110000.00, 'pending', 'pending', DATE_SUB(NOW(), INTERVAL 30 MINUTE)),
-(4, 'BK2024040104', 3, 3, 160000.00, 'paid', 'confirmed', DATE_SUB(NOW(), INTERVAL 15 MINUTE)),
-(5, 'BK2024040105', 4, 4, 105000.00, 'failed', 'cancelled', DATE_SUB(NOW(), INTERVAL 5 MINUTE));
+INSERT INTO `bookings` (`id`, `booking_code`, `user_id`, `showtime_id`, `total_amount`, `payment_status`, `booking_status`, `created_at`)
+SELECT 1, 'BK2024040101', 2, 1, 180000.00, 'paid', 'confirmed', DATE_SUB(NOW(), INTERVAL 2 HOUR)
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 'BK2024040102', 3, 1, 225000.00, 'paid', 'confirmed', DATE_SUB(NOW(), INTERVAL 1 HOUR)
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 3, 'BK2024040103', 2, 2, 110000.00, 'pending', 'pending', DATE_SUB(NOW(), INTERVAL 30 MINUTE)
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 'BK2024040104', 3, 3, 160000.00, 'paid', 'confirmed', DATE_SUB(NOW(), INTERVAL 15 MINUTE)
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 5, 'BK2024040105', 4, 4, 105000.00, 'failed', 'cancelled', DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+WHERE @cinema_seed_demo;
 
 -- Dữ liệu booking_details (Chi tiết ghế của từng đơn)
 -- Đơn 1: Ghế A3, A4 suất 1
-INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`) VALUES
-(1, 3, 90000.00),
-(1, 4, 90000.00);
+INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`)
+SELECT 1, 3, 90000.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 1, 4, 90000.00
+WHERE @cinema_seed_demo;
 
 -- Đơn 2: Ghế C3, C4 (VIP) suất 1 (90,000 * 1.25 = 112,500/ghế -> 225,000)
-INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`) VALUES
-(2, 19, 112500.00),
-(2, 20, 112500.00);
+INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`)
+SELECT 2, 19, 112500.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 2, 20, 112500.00
+WHERE @cinema_seed_demo;
 
 -- Đơn 3: Ghế B2 suất 2
-INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`) VALUES
-(3, 10, 110000.00);
+INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`)
+SELECT 3, 10, 110000.00
+WHERE @cinema_seed_demo;
 
 -- Đơn 4: Ghế A1, A2 suất 3
-INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`) VALUES
-(4, 29, 80000.00),
-(4, 30, 80000.00);
+INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`)
+SELECT 4, 29, 80000.00
+WHERE @cinema_seed_demo
+UNION ALL
+SELECT 4, 30, 80000.00
+WHERE @cinema_seed_demo;
 
 -- Đơn 5: Ghế B1 suất 4
-INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`) VALUES
-(5, 9, 105000.00);
+INSERT INTO `booking_details` (`booking_id`, `seat_id`, `price`)
+SELECT 5, 9, 105000.00
+WHERE @cinema_seed_demo;
 
+COMMIT;
+SET @cinema_seed_demo = NULL;

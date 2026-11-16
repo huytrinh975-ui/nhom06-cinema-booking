@@ -1,4 +1,7 @@
 <?php
+require_once __DIR__ . '/../../includes/auth.php';
+$customer = currentCustomer();
+
 $pageTitle = $pageTitle ?? 'CINEMATIX - Đặt vé xem phim trực tuyến';
 $active = $active ?? '';
 $bodyClass = $bodyClass ?? '';
@@ -32,7 +35,11 @@ $pageCss = $pageCss ?? [];
         </nav>
 
         <div class="header-actions">
-            <a class="btn btn-primary" href="customer-login.php">Đăng nhập</a>
+            <?php if ($customer): ?>
+                <a class="btn btn-ghost" href="../profile.php">Tài khoản</a>
+            <?php else: ?>
+                <a class="btn btn-primary" href="../login.php">Đăng nhập</a>
+            <?php endif; ?>
         </div>
     </div>
 </header>

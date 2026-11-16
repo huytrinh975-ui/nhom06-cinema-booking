@@ -1,6 +1,6 @@
 <?php
 /**
- * Kết nối Cơ sở dữ liệu MySQL (MySQLi)
+ * Kết nối Cơ sở dữ liệu MySQL (MySQLi & PDO)
  * Dự án: Hệ thống đặt vé xem phim trực tuyến (nhom06-cinema-booking)
  */
 
@@ -10,7 +10,7 @@ $db_pass = '';
 $db_name = 'cinema_booking_db';
 $db_port = 3306;
 
-// Khởi tạo kết nối MySQLi
+// Khởi tạo kết nối MySQLi ($conn)
 $conn = new mysqli($db_host, $db_user, $db_pass, $db_name, $db_port);
 
 // Kiểm tra lỗi kết nối
@@ -25,12 +25,28 @@ if ($conn->connect_error) {
 // Thiết lập bảng mã utf8mb4 hỗ trợ tiếng Việt có dấu và biểu tượng đầy đủ
 $conn->set_charset("utf8mb4");
 
+// Khởi tạo thêm kết nối PDO ($pdo) nếu cần dùng
+try {
+    $pdo = new PDO(
+        "mysql:host={$db_host};port={$db_port};dbname={$db_name};charset=utf8mb4",
+        $db_user,
+        $db_pass,
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES => false,
+        ]
+    );
+} catch (PDOException $e) {
+    // Không dừng chương trình nếu PDO lỗi để MySQLi vẫn hoạt động
+}
+
 /**
  * Hàm định dạng tiền tệ VND
  */
 if (!function_exists('format_currency')) {
     function format_currency($amount) {
-        return number_format($amount, 0, ',', '.') . ' ₫';
+        return number_format((float)$amount, 0, ',', '.') . ' ₫';
     }
 }
 
@@ -52,4 +68,3 @@ if (!function_exists('format_date')) {
         return date('d/m/Y', $time);
     }
 }
-

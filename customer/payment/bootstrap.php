@@ -109,6 +109,9 @@ function cbp_notice(int $status, string $title, string $message, bool $demoLink 
             <a class="brand" href="checkout.php">CINE<span>BOOK</span></a>
             <h1><?= cbp_e($title) ?></h1>
             <p class="muted"><?= cbp_e($message) ?></p>
+            <?php if ($status === 401): ?>
+                <a class="button" href="../../login.php">Đăng nhập</a>
+            <?php endif; ?>
             <?php if ($demoLink && cbp_demo_allowed() && is_file(__DIR__ . '/dev-login.php')): ?>
                 <a class="button" href="dev-login.php">Mở tài khoản mẫu trên localhost</a>
             <?php elseif ($status >= 400 && $status !== 401): ?>
