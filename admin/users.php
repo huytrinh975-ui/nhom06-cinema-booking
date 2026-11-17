@@ -10,63 +10,6 @@ require_once __DIR__ . '/header.php';
 if (($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $action = $_POST['action'] ?? '';
 
-    // 1. Thêm hoặc Sửa người dùng
-    if ($action === 'save_user') {
-        $id = (int)($_POST['id'] ?? 0);
-        $fullname = trim($_POST['fullname'] ?? '');
-        $email = trim($_POST['email'] ?? '');
-        $phone = trim($_POST['phone'] ?? '');
-        $role = $_POST['role'] ?? 'customer';
-        $status = $_POST['status'] ?? 'active';
-        $password = trim($_POST['password'] ?? '');
-
-        if (empty($fullname) || empty($email)) {
-            $_SESSION['flash_error'] = 'Vui lòng nhập họ tên và email hợp lệ!';
-        } else {
-            if ($id > 0) {
-                // Kiểm tra trùng email (ngoại trừ chính user này)
-                $chk = $conn->prepare("SELECT id FROM users WHERE email = ? AND id != ?");
-                $chk->bind_param("si", $email, $id);
-                $chk->execute();
-                if ($chk->get_result()->num_rows > 0) {
-                    $_SESSION['flash_error'] = 'Email này đã được sử dụng bởi một tài khoản khác!';
-                } else {
-                    if (!empty($password)) {
-                        $hashed = password_hash($password, PASSWORD_BCRYPT);
-                        $stmt = $conn->prepare("UPDATE users SET fullname = ?, email = ?, phone = ?, role = ?, status = ?, password = ? WHERE id = ?");
-                        $stmt->bind_param("ssssssi", $fullname, $email, $phone, $role, $status, $hashed, $id);
-                    } else {
-                        $stmt = $conn->prepare("UPDATE users SET fullname = ?, email = ?, phone = ?, role = ?, status = ? WHERE id = ?");
-                        $stmt->bind_param("sssssi", $fullname, $email, $phone, $role, $status, $id);
-                    }
-                    $stmt->execute();
-                    $stmt->close();
-                    $_SESSION['flash_success'] = 'Cập nhật tài khoản người dùng thành công!';
-                }
-                $chk->close();
-            } else {
-                // Thêm mới tài khoản
-                $chk = $conn->prepare("SELECT id FROM users WHERE email = ?");
-                $chk->bind_param("s", $email);
-                $chk->execute();
-                if ($chk->get_result()->num_rows > 0) {
-                    $_SESSION['flash_error'] = 'Email này đã tồn tại trong hệ thống!';
-                } else {
-                    $passToHash = !empty($password) ? $password : '123456';
-                    $hashed = password_hash($passToHash, PASSWORD_BCRYPT);
-                    $stmt = $conn->prepare("INSERT INTO users (fullname, email, phone, role, status, password) VALUES (?, ?, ?, ?, ?, ?)");
-                    $stmt->bind_param("ssssss", $fullname, $email, $phone, $role, $status, $hashed);
-                    $stmt->execute();
-                    $stmt->close();
-                    $_SESSION['flash_success'] = 'Thêm tài khoản người dùng mới thành công!';
-                }
-                $chk->close();
-            }
-        }
-        header("Location: users.php");
-        exit;
-    }
-
     // 2. Khóa hoặc Mở khóa tài khoản nhanh
     if ($action === 'toggle_status') {
         $userId = (int)($_POST['user_id'] ?? 0);
@@ -303,16 +246,12 @@ $users = $stmt->get_result();
                             <td class="text-end">
                                 <div class="btn-group btn-group-sm">
                                     <!-- Nút Khóa / Mở Khóa -->
-                                    <form method="POST" class="d-inline">
-                                        <input type="hidden" name="action" value="toggle_status">
-                                        <input type="hidden" name="user_id" value="<?= $u['id'] ?>">
-                                        <input type="hidden" name="new_status" value="<?= $u['status'] === 'active' ? 'locked' : 'active' ?>">
-                                        <button type="submit" 
-                                                class="btn <?= $u['status'] === 'active' ? 'btn-outline-warning' : 'btn-outline-success' ?>" 
-                                                title="<?= $u['status'] === 'active' ? 'Khóa tài khoản này' : 'Mở khóa tài khoản' ?>">
-                                            <i class="fa-solid <?= $u['status'] === 'active' ? 'fa-lock' : 'fa-lock-open' ?>"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button"
+                                            onclick="toggleUserStatus(<?= $u['id'] ?>, '<?= $u['status'] ?>')"
+                                            class="btn <?= $u['status'] === 'active' ? 'btn-outline-warning' : 'btn-outline-success' ?>"
+                                            title="<?= $u['status'] === 'active' ? 'Khóa tài khoản này' : 'Mở khóa tài khoản' ?>">
+                                        <i class="fa-solid <?= $u['status'] === 'active' ? 'fa-lock' : 'fa-lock-open' ?>"></i>
+                                    </button>
 
                                     <!-- Nút Sửa -->
                                     <button class="btn btn-outline-primary" 
@@ -349,7 +288,7 @@ $users = $stmt->get_result();
 <div class="modal fade" id="userModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
-            <form method="POST">
+            <form id="userForm" onsubmit="saveUser(event)">
                 <input type="hidden" name="action" value="save_user">
                 <input type="hidden" name="id" id="modal_user_id" value="0">
 
@@ -408,6 +347,76 @@ $users = $stmt->get_result();
 </div>
 
 <script>
+function saveUser(event) {
+    event.preventDefault();
+    const form = event.target;
+    const formData = new FormData(form);
+
+    fetch('ajax_update_user.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: data.message,
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: data.message
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+function toggleUserStatus(userId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'locked' : 'active';
+    const formData = new FormData();
+    formData.append('action', 'toggle_status');
+    formData.append('user_id', userId);
+    formData.append('new_status', newStatus);
+
+    fetch('ajax_update_user.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: data.message,
+                timer: 1500,
+                showConfirmButton: false
+            }).then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: data.message
+            });
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
 function openAddUserModal() {
     document.getElementById('userModalTitle').innerText = 'Thêm Tài Khoản Mới';
     document.getElementById('modal_user_id').value = '0';
