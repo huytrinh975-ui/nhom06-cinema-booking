@@ -19,10 +19,10 @@ function cbp_header(string $title, ?array $customer, string $active = ''): void
         <?php foreach (['checkout.php'=>['orders','Đơn hàng'], 'tickets.php'=>['tickets','Vé của tôi'], 'history.php'=>['history','Lịch sử'], 'policy.php'=>['policy','Quy định hủy']] as $href=>$item): ?>
             <a href="<?= cbp_e($href) ?>" <?= $active === $item[0] ? 'aria-current="page"' : '' ?>><?= cbp_e($item[1]) ?></a>
         <?php endforeach; ?>
-        <?php if (cbp_demo_allowed() && is_file(__DIR__ . '/demo.php')): ?><a href="demo.php" <?= $active === 'demo' ? 'aria-current="page"' : '' ?>>Tạo đơn demo</a><?php endif; ?>
+        <?php if (cbp_demo_allowed() && is_file(__DIR__ . '/demo.php')): ?><a href="demo.php" <?= $active === 'demo' ? 'aria-current="page"' : '' ?>>Tạo đơn thử nghiệm</a><?php endif; ?>
     </nav></header>
     <main id="main" class="container page">
-    <div class="demo-note"><strong>BẢN DEMO HỌC TẬP</strong> · Thanh toán và hoàn tiền đều được mô phỏng, không thu tiền thật.</div>
+    <div class="demo-note"><strong>PHIÊN BẢN THỬ NGHIỆM</strong> · Thanh toán và hoàn tiền đều được mô phỏng, không thu tiền thật.</div>
     <?php
 }
 
